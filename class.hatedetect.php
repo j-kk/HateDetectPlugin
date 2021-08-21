@@ -4,9 +4,11 @@ class HateDetect {
 	const API_HOST = 'hateapi';
 	const API_PORT = 80;
 
-	private static $initiated = false;
+    private static $initiated = false;
 
 	private static $auto_allow = true;
+
+	private static bool $notify_user = true;
 
 	public static function init() {
 		if ( ! self::$initiated ) {
@@ -40,7 +42,12 @@ class HateDetect {
 						// comment contains hate - discard
 						wp_set_comment_status( $comment->comment_ID, 'trash' );
 						// TODO send mail to user
-						return new WP_Error( 'hatedetect_hateful_comment_api', __( 'Comment discarded.', 'Hatedetect' ) );
+                        if ( self::$notify_user ) {
+                            $mail_message = "The owner of ".strval(get_the_permalink($comment->comment_post_ID))." would like to inform you that your comment was blocked due to hate detection. \n You have tired to send the following comment content: \n".strval($comment->comment_content)."\n to the post: \n".strval(get_post_permalink($comment->comment_post_ID))."";
+                            $headers = array('Content-Type: text/html; charset=UTF-8');
+                            wp_mail(strval($comment->comment_author_email), "Post rejected", $mail_message, $headers );
+                        }
+                        return new WP_Error( 'hatedetect_hateful_comment_api', __( 'Comment discarded.', 'Hatedetect' ) );
 					} else {
 						if ( self::$auto_allow ) {
 							wp_set_comment_status( $comment->comment_ID, 'approve' );
