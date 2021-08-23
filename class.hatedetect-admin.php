@@ -1,0 +1,898 @@
+<?php
+
+class HateDetect_Admin
+{
+    const NONCE = 'hatedetect-update-key';
+
+    private static $initiated = false;
+    private static $key_status = null;
+    private static $notices = array();
+    private static $allowed = array(
+        'a' => array(
+            'href' => true,
+            'title' => true,
+        ),
+        'b' => array(),
+        'code' => array(),
+        'del' => array(
+            'datetime' => true,
+        ),
+        'em' => array(),
+        'i' => array(),
+        'q' => array(
+            'cite' => true,
+        ),
+        'strike' => array(),
+        'strong' => array(),
+    );
+
+    public static function init()
+    {
+        if (!self::$initiated) {
+            self::init_hooks();
+        }
+
+        if (isset($_POST['action']) && $_POST['action'] == 'enter-key') {
+            self::enter_api_key();
+        }
+    }
+
+    public static function init_hooks()
+    {
+        self::$initiated = true;
+
+        add_action('admin_init', array('HateDetect_Admin', 'admin_init'));
+        add_action('admin_menu', array(
+            'HateDetect_Admin',
+            'admin_menu'
+        ), 5);
+        add_action('admin_notices', array('HateDetect_Admin', 'display_notice'));
+        add_action('admin_enqueue_scripts', array('HateDetect_Admin', 'load_resources'));
+        add_action('manage_comments_nav', array('HateDetect_Admin', 'check_for_hate_button'));
+        add_action('admin_action_hatedetect_recheck_queue', array('HateDetect_Admin', 'recheck_queue'));
+        add_action('wp_ajax_hatedetect_recheck_queue', array('HateDetect_Admin', 'recheck_queue'));
+
+        add_filter('plugin_action_links', array('HateDetect_Admin', 'plugin_action_links'), 10, 2);
+        add_filter('comment_row_actions', array('HateDetect_Admin', 'comment_row_action'), 10, 2);
+
+        add_filter('plugin_action_links_' . plugin_basename(plugin_dir_path(__FILE__) . 'HateDetect.php'), array(
+            'HateDetect_Admin',
+            'admin_plugin_settings_link'
+        ));
+
+        add_filter('wxr_export_skip_commentmeta', array(
+            'HateDetect_Admin',
+            'exclude_commentmeta_from_export'
+        ), 10, 3);
+
+    }
+
+    public static function admin_init()
+    {
+        if (get_option('Activated_HateDetect')) {
+            delete_option('Activated_HateDetect');
+            if (!headers_sent()) {
+                wp_redirect(add_query_arg(array(
+                    'page' => 'hatedetect-key-config',
+                    'view' => 'start'
+                ), admin_url('options-general.php')));
+            }
+        }
+
+        load_plugin_textdomain('hatedetect');
+        add_meta_box('hatedetect-status', __('Comment History', 'hatedetect'), array(
+            'HateDetect_Admin',
+            'comment_status_meta_box'
+        ), 'comment', 'normal');
+
+        if (function_exists('wp_add_privacy_policy_content')) {
+            wp_add_privacy_policy_content(
+                __('HateDetect', 'hatedetect'),
+                __('We collect information about visitors who comment on Sites that use our HateDetect anti-hate service. The information we collect depends on how the User sets up HateDetect for the Site, but it includes the commenter\'s name, email address, and the comment itself).', 'hatedetect')
+            );
+        }
+    }
+
+    public static function admin_menu()
+    {
+        self::load_menu();
+    }
+
+    public static function admin_head()
+    {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+    }
+
+    public static function admin_plugin_settings_link($links)
+    {
+        $settings_link = '<a href="' . esc_url(self::get_page_url()) . '">' . __('Settings', 'hatedetect') . '</a>';
+        array_unshift($links, $settings_link);
+        HateDetect::log("admin_plugin_settings_links links:  ".$links);
+
+        return $links;
+    }
+
+    public static function load_menu()
+    {
+        $hook = add_options_page(__('HateDetect', 'hatedetect'), __('HateDetect', 'hatedetect'), 'manage_options', 'hatedetect-key-config', array(
+            'HateDetect_Admin',
+            'display_page'
+        ));
+
+        if ($hook) {
+            add_action("load-$hook", array('HateDetect_Admin', 'admin_help'));
+        }
+    }
+
+    public static function load_resources()
+    {
+        global $hook_suffix;
+
+        if (in_array($hook_suffix, apply_filters('hatedetect_admin_page_hook_suffixes', array(
+            'index.php', # dashboard
+            'edit-comments.php',
+            'comment.php',
+            'post.php',
+            'settings_page_hatedetect-key-config',
+            'plugins.php',
+        )))) {
+            wp_register_style('hatedetect.css', plugin_dir_url(__FILE__) . '_inc/hatedetect.css', array(), HATEDETECT_VERSION);
+            wp_enqueue_style('hatedetect.css');
+
+            wp_register_script('hatedetect.js', plugin_dir_url(__FILE__) . '_inc/hatedetect.js', array('jquery'), HATEDETECT_VERSION);
+            wp_enqueue_script('hatedetect.js');
+
+            $inline_js = array(
+                'comment_author_url_nonce' => wp_create_nonce('comment_author_url_nonce'),
+                'strings' => array(
+                    'Remove this URL' => __('Remove this URL', 'hatedetect'),
+                    'Removing...' => __('Removing...', 'hatedetect'),
+                    'URL removed' => __('URL removed', 'hatedetect'),
+                    '(undo)' => __('(undo)', 'hatedetect'),
+                    'Re-adding...' => __('Re-adding...', 'hatedetect'),
+                )
+            );
+
+            if (isset($_GET['hatedetect_recheck']) && wp_verify_nonce($_GET['hatedetect_recheck'], 'hatedetect_recheck')) {
+                $inline_js['start_recheck'] = true;
+            }
+
+            if (apply_filters('hatedetect_enable_mshots', true)) {
+                $inline_js['enable_mshots'] = true;
+            }
+
+            wp_localize_script('hatedetect.js', 'WPHateDetect', $inline_js);
+        }
+    }
+
+    /**
+     * Add help to the HateDetect page
+     *
+     * @return false if not the HateDetect page
+     */
+    public static function admin_help()
+    {
+        $current_screen = get_current_screen();
+
+        // Screen Content
+        if (current_user_can('manage_options')) {
+            if (!HateDetect::get_api_key() || (isset($_GET['view']) && $_GET['view'] == 'start')) {
+                //setup page
+                $current_screen->add_help_tab(
+                    array(
+                        'id' => 'overview',
+                        'title' => __('Overview', 'hatedetect'),
+                        'content' =>
+                            '<p><strong>' . esc_html__('HateDetect Setup', 'hatedetect') . '</strong></p>' .
+                            '<p>' . esc_html__('HateDetect filters out hate.', 'hatedetect') . '</p>' .
+                            '<p>' . esc_html__('On this page, you are able to set up the HateDetect plugin.', 'hatedetect') . '</p>',
+                    )
+                );
+
+
+                $current_screen->add_help_tab(
+                    array(
+                        'id' => 'setup-manual',
+                        'title' => __('Enter an API Key', 'hatedetect'),
+                        'content' =>
+                            '<p><strong>' . esc_html__('HateDetect Setup', 'hatedetect') . '</strong></p>' .
+                            '<p>' . esc_html__('If you already have an API key', 'hatedetect') . '</p>' .
+                            '<ol>' .
+                            '<li>' . esc_html__('Copy and paste the API key into the text field.', 'hatedetect') . '</li>' .
+                            '<li>' . esc_html__('Click the Use this Key button.', 'hatedetect') . '</li>' .
+                            '</ol>',
+                    )
+                );
+            } else {
+                //configuration page
+                $current_screen->add_help_tab(
+                    array(
+                        'id' => 'overview',
+                        'title' => __('Overview', 'hatedetect'),
+                        'content' =>
+                            '<p><strong>' . esc_html__('HateDetect Configuration', 'hatedetect') . '</strong></p>' .
+                            '<p>' . esc_html__('HateDetect filters out hate.', 'hatedetect') . '</p>' .
+                            '<p>' . esc_html__('On this page, you are able to update your HateDetect settings.', 'hatedetect') . '</p>',
+                    )
+                );
+
+                $current_screen->add_help_tab(
+                    array(
+                        'id' => 'settings',
+                        'title' => __('Settings', 'hatedetect'),
+                        'content' =>
+                            '<p><strong>' . esc_html__('HateDetect Configuration', 'hatedetect') . '</strong></p>' .
+                            (HateDetect::predefined_api_key() ? '' : '<p><strong>' . esc_html__('API Key', 'hatedetect') . '</strong> - ' . esc_html__('Enter/remove an API key.', 'hatedetect') . '</p>') .
+                            '<p><strong>' . esc_html__('Auto allow', 'hatedetect') . '</strong> - ' . esc_html__('Should plugin auto allow all comments which does not contain hate. (skips moderation verification)', 'hatedetect') . '</p>' .
+                            '<p><strong>' . esc_html__('Auto discard', 'hatedetect') . '</strong> - ' . esc_html__('Choose to either discard hateful comments automatically or to hold them for moderator interaction.', 'hatedetect') . '</p>',
+                    )
+                );
+
+            }
+        }
+    }
+
+    public static function enter_api_key()
+    {
+        if (!current_user_can('manage_options')) {
+            die(__('Cheatin&#8217; uh?', 'hatedetect'));
+        }
+
+        if (!wp_verify_nonce($_POST['_wpnonce'], self::NONCE)) {
+            return false;
+        }
+
+        foreach (array('hatedetect_auto_allow', 'hatedetect_auto_discard') as $option) {
+            update_option($option, isset($_POST[$option]) && (int)$_POST[$option] == 1 ? '1' : '0');
+            HateDetect::log("Updated option: " . $option);
+        }
+
+        if (!empty($_POST['hatedetect_comment_form_privacy_notice'])) {
+            self::set_form_privacy_notice_option($_POST['hatedetect_comment_form_privacy_notice']);
+        } else {
+            self::set_form_privacy_notice_option('hide');
+        }
+
+        if (HateDetect::predefined_api_key()) {
+            return false; //shouldn't have option to save key if already defined
+        }
+
+        $new_key = $_POST['key'];
+        $old_key = HateDetect::get_api_key();
+
+
+        if (empty($new_key)) {
+            if (!empty($old_key)) {
+                delete_option('hatedetect_api_key');
+                self::$notices[] = 'new-key-empty';
+            }
+        } elseif ($new_key != $old_key) {
+            self::save_key($new_key);
+        }
+
+        return true;
+    }
+
+    public static function save_key($api_key)
+    {
+        HateDetect::log("Verifying key: " . $api_key);
+        $key_status = HateDetect::verify_key($api_key);
+        self::$key_status = $key_status;
+
+        if ($key_status == 'OK') {
+            update_option('hatedetect_api_key', $api_key); # TODO replace with hatedetect_api_key
+            self::$notices['status'] = 'new-key-valid';
+
+        } elseif (in_array($key_status, array('invalid', 'failed'))) {
+            self::$notices['status'] = 'new-key-' . $key_status;
+        }
+    }
+
+    public static function check_for_spam_button($comment_status)
+    {
+        // The "Check for Spam" button should only appear when the page might be showing
+        // a comment with comment_approved=0, which means an un-trashed, un-spammed,
+        // not-yet-moderated comment.
+        if ('all' != $comment_status && 'moderated' != $comment_status) {
+            return;
+        }
+
+        $link = '';
+
+        $comments_count = wp_count_comments();
+
+        echo '</div>';
+        echo '<div class="alignleft actions">';
+        # TODO
+        $classes = array(
+            'button-secondary',
+            'checkforspam',
+            'button-disabled'    // Disable button until the page is loaded
+        );
+
+        if ($comments_count->moderated > 0) {
+            $classes[] = 'enable-on-load';
+
+            if (!HateDetect::get_api_key()) {
+                $link = add_query_arg(array('page' => 'hatedetect-key-config'), admin_url('options-general.php'));
+                $classes[] = 'ajax-disabled';
+            }
+        }
+
+        echo '<a
+				class="' . esc_attr(implode(' ', $classes)) . '"' .
+            (!empty($link) ? ' href="' . esc_url($link) . '"' : '') .
+            /* translators: The placeholder is for showing how much of the process has completed, as a percent. e.g., "Checking for Spam (40%)" */
+            ' data-progress-label="' . esc_attr(__('Checking for Spam (%1$s%)', 'hatedetect')) . '"
+				data-success-url="' . esc_attr(remove_query_arg(array(
+                'hatedetect_recheck',
+                'hatedetect_recheck_error'
+            ), add_query_arg(array(
+                'hatedetect_recheck_complete' => 1,
+                'recheck_count' => urlencode('__recheck_count__'),
+                'spam_count' => urlencode('__spam_count__')
+            )))) . '"
+				data-failure-url="' . esc_attr(remove_query_arg(array(
+                'hatedetect_recheck',
+                'hatedetect_recheck_complete'
+            ), add_query_arg(array('hatedetect_recheck_error' => 1)))) . '"
+				data-pending-comment-count="' . esc_attr($comments_count->moderated) . '"
+				data-nonce="' . esc_attr(wp_create_nonce('hatedetect_check_for_spam')) . '"
+				' . (!in_array('ajax-disabled', $classes) ? 'onclick="return false;"' : '') . '
+				>' . esc_html__('Check for Spam', 'hatedetect') . '</a>';
+        echo '<span class="checkforspam-spinner"></span>';
+    }
+
+    # TODO
+    public static function recheck_queue()
+    {
+        global $wpdb;
+
+        HateDetect::fix_scheduled_recheck();
+
+        if (!(isset($_GET['recheckqueue']) || (isset($_REQUEST['action']) && 'hatedetect_recheck_queue' == $_REQUEST['action']))) {
+            return;
+        }
+
+        if (!wp_verify_nonce($_POST['nonce'], 'hatedetect_check_for_spam')) {
+            wp_send_json(array(
+                'error' => __("You don't have permission to do that."),
+            ));
+
+            return;
+        }
+
+        $result_counts = self::recheck_queue_portion(empty($_POST['offset']) ? 0 : $_POST['offset'], empty($_POST['limit']) ? 100 : $_POST['limit']);
+
+        if (defined('DOING_AJAX') && DOING_AJAX) {
+            wp_send_json(array(
+                'counts' => $result_counts,
+            ));
+        } else {
+            $redirect_to = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : admin_url('edit-comments.php');
+            wp_safe_redirect($redirect_to);
+            exit;
+        }
+    }
+
+    # TODO
+    public static function recheck_queue_portion($start = 0, $limit = 100)
+    {
+        global $wpdb;
+
+        $paginate = '';
+
+        if ($limit <= 0) {
+            $limit = 100;
+        }
+
+        if ($start < 0) {
+            $start = 0;
+        }
+
+        $moderation = $wpdb->get_col($wpdb->prepare("SELECT * FROM {$wpdb->comments} WHERE comment_approved = '0' LIMIT %d OFFSET %d", $limit, $start));
+
+        $result_counts = array(
+            'processed' => count($moderation),
+            'spam' => 0,
+            'ham' => 0,
+            'error' => 0,
+        );
+
+        foreach ($moderation as $comment_id) {
+            $api_response = HateDetect::recheck_comment($comment_id, 'recheck_queue');
+
+            if ('true' === $api_response) {
+                ++$result_counts['spam'];
+            } elseif ('false' === $api_response) {
+                ++$result_counts['ham'];
+            } else {
+                ++$result_counts['error'];
+            }
+        }
+
+        return $result_counts;
+    }
+
+    # TODO
+    public static function comment_row_action($a, $comment)
+    {
+        $hatedetect_result = get_comment_meta($comment->comment_ID, 'hatedetect_result', true);
+        $hatedetect_error = get_comment_meta($comment->comment_ID, 'hatedetect_error', true);
+        $user_result = get_comment_meta($comment->comment_ID, 'hatedetect_user_result', true);
+        $comment_status = wp_get_comment_status($comment->comment_ID);
+        $desc = null;
+        if ($hatedetect_error) {
+            $desc = __('Awaiting spam check', 'hatedetect');
+        } elseif (!$user_result || $user_result == $hatedetect_result) {
+            // Show the original HateDetect result if the user hasn't overridden it, or if their decision was the same
+            if ($hatedetect_result == 'true' && $comment_status != 'spam' && $comment_status != 'trash') {
+                $desc = __('Flagged as spam by HateDetect', 'hatedetect');
+            } elseif ($hatedetect_result == 'false' && $comment_status == 'spam') {
+                $desc = __('Cleared by HateDetect', 'hatedetect');
+            }
+        } else {
+            $who = get_comment_meta($comment->comment_ID, 'hatedetect_user', true);
+            if ($user_result == 'true') {
+                $desc = sprintf(__('Flagged as spam by %s', 'hatedetect'), $who);
+            } else {
+                $desc = sprintf(__('Un-spammed by %s', 'hatedetect'), $who);
+            }
+        }
+
+        // add a History item to the hover links, just after Edit
+        if ($hatedetect_result) {
+            $b = array();
+            foreach ($a as $k => $item) {
+                $b[$k] = $item;
+                if (
+                    $k == 'edit'
+                    || $k == 'unspam'
+                ) {
+                    $b['history'] = '<a href="comment.php?action=editcomment&amp;c=' . $comment->comment_ID . '#hatedetect-status" title="' . esc_attr__('View comment history', 'hatedetect') . '"> ' . esc_html__('History', 'hatedetect') . '</a>';
+                }
+            }
+
+            $a = $b;
+        }
+
+        if ($desc) {
+            echo '<span class="hatedetect-status" commentid="' . $comment->comment_ID . '"><a href="comment.php?action=editcomment&amp;c=' . $comment->comment_ID . '#hatedetect-status" title="' . esc_attr__('View comment history', 'hatedetect') . '">' . esc_html($desc) . '</a></span>';
+        }
+
+        $show_user_comments_option = get_option('hatedetect_show_user_comments_approved');
+
+        if ($show_user_comments_option === false) {
+            // Default to active if the user hasn't made a decision.
+            $show_user_comments_option = '1';
+        }
+
+        $show_user_comments = apply_filters('hatedetect_show_user_comments_approved', $show_user_comments_option);
+        $show_user_comments = $show_user_comments === 'false' ? false : $show_user_comments; //option used to be saved as 'false' / 'true'
+
+        if ($show_user_comments) {
+            $comment_count = HateDetect::get_user_comments_approved($comment->user_id, $comment->comment_author_email, $comment->comment_author, $comment->comment_author_url);
+            $comment_count = intval($comment_count);
+            echo '<span class="hatedetect-user-comment-count" commentid="' . $comment->comment_ID . '" style="display:none;"><br><span class="hatedetect-user-comment-counts">' . sprintf(esc_html(_n('%s approved', '%s approved', $comment_count, 'hatedetect')), number_format_i18n($comment_count)) . '</span></span>';
+        }
+
+        return $a;
+    }
+
+    public static function comment_status_meta_box($comment)
+    {
+        $history = HateDetect::get_comment_history($comment->comment_ID);
+
+        if ($history) {
+            foreach ($history as $row) {
+                $time = date('D d M Y @ h:i:s a', $row['time']) . ' GMT';
+
+                $message = '';
+
+                if (!empty($row['message'])) {
+                    // Old versions of HateDetect stored the message as a literal string in the commentmeta.
+                    // New versions don't do that for two reasons:
+                    // 1) Save space.
+                    // 2) The message can be translated into the current language of the blog, not stuck
+                    //    in the language of the blog when the comment was made.
+                    $message = esc_html($row['message']);
+                }
+
+                // If possible, use a current translation.
+                switch ($row['event']) {
+                    case 'recheck-spam';
+                        $message = esc_html(__('HateDetect re-checked and caught this comment as spam.', 'hatedetect'));
+                        break;
+                    case 'check-spam':
+                        $message = esc_html(__('HateDetect caught this comment as spam.', 'hatedetect'));
+                        break;
+                    case 'recheck-ham':
+                        $message = esc_html(__('HateDetect re-checked and cleared this comment.', 'hatedetect'));
+                        break;
+                    case 'check-ham':
+                        $message = esc_html(__('HateDetect cleared this comment.', 'hatedetect'));
+                        break;
+                    case 'wp-blacklisted':
+                    case 'wp-disallowed':
+                        $message = sprintf(
+                        /* translators: The placeholder is a WordPress PHP function name. */
+                            esc_html(__('Comment was caught by %s.', 'hatedetect')),
+                            function_exists('wp_check_comment_disallowed_list') ? '<code>wp_check_comment_disallowed_list</code>' : '<code>wp_blacklist_check</code>'
+                        );
+                        break;
+                    case 'report-spam':
+                        if (isset($row['user'])) {
+                            $message = esc_html(sprintf(__('%s reported this comment as spam.', 'hatedetect'), $row['user']));
+                        } else if (!$message) {
+                            $message = esc_html(__('This comment was reported as spam.', 'hatedetect'));
+                        }
+                        break;
+                    case 'report-ham':
+                        if (isset($row['user'])) {
+                            $message = esc_html(sprintf(__('%s reported this comment as not spam.', 'hatedetect'), $row['user']));
+                        } else if (!$message) {
+                            $message = esc_html(__('This comment was reported as not spam.', 'hatedetect'));
+                        }
+                        break;
+                    case 'cron-retry-spam':
+                        $message = esc_html(__('HateDetect caught this comment as spam during an automatic retry.', 'hatedetect'));
+                        break;
+                    case 'cron-retry-ham':
+                        $message = esc_html(__('HateDetect cleared this comment during an automatic retry.', 'hatedetect'));
+                        break;
+                    case 'check-error':
+                        if (isset($row['meta'], $row['meta']['response'])) {
+                            $message = sprintf(esc_html(__('HateDetect was unable to check this comment (response: %s) but will automatically retry later.', 'hatedetect')), '<code>' . esc_html($row['meta']['response']) . '</code>');
+                        } else {
+                            $message = esc_html(__('HateDetect was unable to check this comment but will automatically retry later.', 'hatedetect'));
+                        }
+                        break;
+                    case 'recheck-error':
+                        if (isset($row['meta'], $row['meta']['response'])) {
+                            $message = sprintf(esc_html(__('HateDetect was unable to recheck this comment (response: %s).', 'hatedetect')), '<code>' . esc_html($row['meta']['response']) . '</code>');
+                        } else {
+                            $message = esc_html(__('HateDetect was unable to recheck this comment.', 'hatedetect'));
+                        }
+                        break;
+                    default:
+                        if (preg_match('/^status-changed/', $row['event'])) {
+                            // Half of these used to be saved without the dash after 'status-changed'.
+                            // See https://plugins.trac.wordpress.org/changeset/1150658/hatedetect/trunk
+                            $new_status = preg_replace('/^status-changed-?/', '', $row['event']);
+                            $message = sprintf(esc_html(__('Comment status was changed to %s', 'hatedetect')), '<code>' . esc_html($new_status) . '</code>');
+                        } else if (preg_match('/^status-/', $row['event'])) {
+                            $new_status = preg_replace('/^status-/', '', $row['event']);
+
+                            if (isset($row['user'])) {
+                                $message = sprintf(esc_html(__('%1$s changed the comment status to %2$s.', 'hatedetect')), $row['user'], '<code>' . esc_html($new_status) . '</code>');
+                            }
+                        }
+                        break;
+
+                }
+
+                if (!empty($message)) {
+                    echo '<p>';
+                    echo '<span style="color: #999;" alt="' . $time . '" title="' . $time . '">' . sprintf(esc_html__('%s ago', 'hatedetect'), human_time_diff($row['time'])) . '</span>';
+                    echo ' - ';
+                    echo $message; // esc_html() is done above so that we can use HTML in some messages.
+                    echo '</p>';
+                }
+            }
+        } else {
+            echo '<p>';
+            echo esc_html(__('No comment history.', 'hatedetect'));
+            echo '</p>';
+        }
+    }
+
+    public static function plugin_action_links($links, $file)
+    {
+        HateDetect::log("plugin_action_links entry links:  ".$links."   file:   ".$file);
+        if ($file == plugin_basename(plugin_dir_url(__FILE__) . '/hatedetect.php')) {
+            $links[] = '<a href="' . esc_url(self::get_page_url()) . '">' . esc_html__('Settings', 'hatedetect') . '</a>';
+        }
+
+        HateDetect::log("plugin_action_links out links:  ".$links."   file:   ".$file);
+        return $links;
+    }
+
+    // Total spam in queue
+    // get_option( 'hatedetect_spam_count' ) is the total caught ever
+    public static function get_spam_count($type = false)
+    {
+        global $wpdb;
+
+        if (!$type) { // total
+            $count = wp_cache_get('hatedetect_spam_count', 'widget');
+            if (false === $count) {
+                $count = wp_count_comments();
+                $count = $count->spam;
+                wp_cache_set('hatedetect_spam_count', $count, 'widget', 3600);
+            }
+
+            return $count;
+        } elseif ('comments' == $type || 'comment' == $type) { // comments
+            $type = '';
+        }
+
+        return (int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(comment_ID) FROM {$wpdb->comments} WHERE comment_approved = 'spam' AND comment_type = %s", $type));
+    }
+
+
+    // Simpler connectivity check
+    public static function check_server_connectivity()
+    {
+        $debug = array();
+        $debug['PHP_VERSION'] = PHP_VERSION;
+        $debug['WORDPRESS_VERSION'] = $GLOBALS['wp_version'];
+        $debug['HATEDETECT_VERSION'] = HATEDETECT_VERSION;
+        $debug['HATEDETECT__PLUGIN_DIR'] = HATEDETECT__PLUGIN_DIR;
+        $debug['SITE_URL'] = site_url();
+        $debug['HOME_URL'] = home_url();
+
+        $response = HateDetect::http_post(array(), 'test', null, false);
+
+        $debug['gethostbynamel'] = function_exists('gethostbynamel') ? 'exists' : 'not here';
+        $debug['Test Connection'] = $response;
+
+        HateDetect::log($debug);
+
+        if ($response && 'OK' == $response[1]) {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Find out whether any comments in the Pending queue have not yet been checked by HateDetect.
+     *
+     * @return bool
+     */
+    public static function are_any_comments_waiting_to_be_checked()
+    {
+        return !!get_comments(array(
+            // Exclude comments that are not pending. This would happen if someone manually approved or spammed a comment
+            // that was waiting to be checked. The hatedetect_error meta entry will eventually be removed by the cron recheck job.
+            'status' => 'hold',
+
+            // This is the commentmeta that is saved when a comment couldn't be checked.
+            'meta_key' => 'hatedetect_error',
+
+            // We only need to know whether at least one comment is waiting for a check.
+            'number' => 1,
+        ));
+    }
+
+    public static function get_page_url($page = 'config')
+    {
+
+        $args = array('page' => 'hatedetect-key-config');
+
+        if ($page == 'delete_key') {
+            $args = array(
+                'page' => 'hatedetect-key-config',
+                'view' => 'start',
+                'action' => 'delete-key',
+                '_wpnonce' => wp_create_nonce(self::NONCE)
+            );
+        }
+
+        return add_query_arg($args, admin_url('options-general.php'));
+    }
+
+    public static function display_alert()
+    {
+        HateDetect::view('notice', array(
+            'type' => 'alert',
+            'code' => (int)get_option('hatedetect_alert_code'),
+            'msg' => get_option('hatedetect_alert_msg')
+        ));
+    }
+
+    public static function display_spam_check_warning()
+    {
+        HateDetect::fix_scheduled_recheck();
+
+        if (wp_next_scheduled('hatedetect_schedule_cron_recheck') > time() && self::are_any_comments_waiting_to_be_checked()) {
+            $link_text = apply_filters('hatedetect_spam_check_warning_link_text', sprintf(__('Please check your <a href="%s">HateDetect configuration</a> and contact your web host if problems persist.', 'hatedetect'), esc_url(self::get_page_url())));
+            HateDetect::view('notice', array('type' => 'spam-check', 'link_text' => $link_text));
+        }
+    }
+
+    public static function display_api_key_warning()
+    {
+        HateDetect::view('notice', array('type' => 'plugin'));
+    }
+
+    public static function display_page()
+    {
+        HateDetect::log('display page');
+        if (!HateDetect::get_api_key() || (isset($_GET['view']) && $_GET['view'] == 'start')) {
+
+            HateDetect::log('start?');
+            self::display_start_page();
+        } else {
+            HateDetect::log('config');
+            self::display_configuration_page();
+        }
+    }
+
+    public static function display_start_page()
+    {
+        if (isset($_GET['action'])) {
+            if ($_GET['action'] == 'delete-key') {
+                if (isset($_GET['_wpnonce']) && wp_verify_nonce($_GET['_wpnonce'], self::NONCE)) {
+                    delete_option('hatedetect_api_key');
+                }
+            }
+        }
+
+        if ($api_key = HateDetect::get_api_key() && (empty(self::$notices['status']) || 'existing-key-invalid' != self::$notices['status'])) {
+            self::display_configuration_page();
+
+            return;
+        }
+
+        //the user can choose to auto connect their API key by clicking a button on the hatedetect done page
+        //get verified api key by using an hatedetect token
+
+
+        if (isset($_GET['token'])) {
+            $api_key_status = HateDetect::verify_key($_GET['token']);
+        }
+        if (isset($_GET['action'])) {
+            if ($_GET['action'] == 'save-key') {
+                if ($api_key_status == 'OK') {
+                    self::save_key($_GET['token']);
+                    self::display_configuration_page();
+
+                    return;
+                }
+            }
+        }
+
+        HateDetect::view('start');
+    }
+
+    public static function display_configuration_page()
+    {
+        $api_key = HateDetect::get_api_key();
+        // Set default setting values
+        if (get_option('hatedetect_auto_discard') === false) {
+            add_option('hatedetect_auto_discard', '0');
+        }
+        if (get_option('hatedetect_auto_allow') === false) {
+            add_option('hatedetect_auto_allow', '0');
+        }
+
+        HateDetect::view('config', compact('api_key'));
+    }
+
+    public static function get_status()
+    {
+        if (self::$key_status === null) {
+            self::$key_status = HateDetect::verify_key(HateDetect::get_api_key());
+            HateDetect::log("Key status is null! Received: ".self::$key_status); # TODO
+        }
+        return self::$key_status;
+    }
+
+    public static function display_notice()
+    {
+        global $hook_suffix;
+
+        if (in_array($hook_suffix, array(
+            'settings_page_hatedetect-key-config'
+        ))) {
+            // This page manages the notices and puts them inline where they make sense.
+            return;
+        }
+
+        if (in_array($hook_suffix, array('edit-comments.php')) && (int)get_option('hatedetect_alert_code') > 0) {
+            HateDetect::verify_key(HateDetect::get_api_key()); //verify that the key is still in alert state
+
+            if (get_option('hatedetect_alert_code') > 0) {
+                self::display_alert();
+            }
+        } elseif (('plugins.php' === $hook_suffix || 'edit-comments.php' === $hook_suffix) && !HateDetect::get_api_key()) {
+            // Show the "Set Up HateDetect" banner on the comments and plugin pages if no API key has been set.
+            self::display_api_key_warning();
+        } elseif ($hook_suffix == 'edit-comments.php' && wp_next_scheduled('hatedetect_schedule_cron_recheck')) {
+            self::display_spam_check_warning();
+        }
+
+        if (isset($_GET['hatedetect_recheck_complete'])) {
+            $recheck_count = (int)$_GET['recheck_count'];
+            $spam_count = (int)$_GET['spam_count'];
+
+            if ($recheck_count === 0) {
+                $message = __('There were no comments to check. HateDetect will only check comments awaiting moderation.', 'hatedetect');
+            } else {
+                $message = sprintf(_n('HateDetect checked %s comment.', 'HateDetect checked %s comments.', $recheck_count, 'hatedetect'), number_format($recheck_count));
+                $message .= ' ';
+
+                if ($spam_count === 0) {
+                    $message .= __('No comments were caught as spam.', 'hatedetect');
+                } else {
+                    $message .= sprintf(_n('%s comment was caught as spam.', '%s comments were caught as spam.', $spam_count, 'hatedetect'), number_format($spam_count));
+                }
+            }
+
+            echo '<div class="notice notice-success"><p>' . esc_html($message) . '</p></div>';
+        } else if (isset($_GET['hatedetect_recheck_error'])) {
+            echo '<div class="notice notice-error"><p>' . esc_html(__('HateDetect could not recheck your comments for spam.', 'hatedetect')) . '</p></div>';
+        }
+    }
+
+    public static function display_status()
+    {
+        HateDetect::log("Display status");
+        if (!self::check_server_connectivity()) {
+            HateDetect::log("Unable to connect, notice.");
+            HateDetect::view('notice', array('type' => 'servers-be-down'));
+        } else if (!empty(self::$notices)) {
+            foreach (self::$notices as $index => $type) {
+                HateDetect::log("Displaying notices: ");
+                if (is_object($type)) {
+                    HateDetect::log($type);
+                    $notice_header = $notice_text = '';
+
+                    if (property_exists($type, 'notice_header')) {
+                        $notice_header = wp_kses($type->notice_header, self::$allowed);
+                    }
+
+                    if (property_exists($type, 'notice_text')) {
+                        $notice_text = wp_kses($type->notice_text, self::$allowed);
+                    }
+
+                    if (property_exists($type, 'status')) {
+                        $type = wp_kses($type->status, self::$allowed);
+                        HateDetect::view('notice', compact('type', 'notice_header', 'notice_text'));
+
+                        unset(self::$notices[$index]);
+                    }
+                } else {
+                    HateDetect::view('notice', compact('type'));
+
+                    unset(self::$notices[$index]);
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Some commentmeta isn't useful in an export file. Suppress it (when supported).
+     *
+     * @param bool $exclude
+     * @param string $key The meta key
+     * @param object $meta The meta object
+     *
+     * @return bool Whether to exclude this meta entry from the export.
+     */
+    public static function exclude_commentmeta_from_export($exclude, $key, $meta)
+    {
+        if (in_array($key, array(
+            'hatedetect_as_submitted',
+            'hatedetect_rechecking',
+            'hatedetect_delayed_moderation_email'
+        ))) {
+            return true;
+        }
+
+        return $exclude;
+    }
+
+    private static function set_form_privacy_notice_option($state)
+    {
+        if (in_array($state, array('display', 'hide'))) {
+            update_option('hatedetect_comment_form_privacy_notice', $state);
+        }
+    }
+
+}
