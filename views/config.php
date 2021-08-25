@@ -109,8 +109,30 @@
                                         <?php esc_html_e('Automatically discard to trash hateful comments.', 'hatedetect'); ?>
                                         <br>
                                     </label>
+
+                                    <label for="hatedetect_notify_user"
+                                           title="<?php esc_attr_e('Notify users in email about comment rejection (because of hate speech).', 'hatedetect'); ?>">
+                                        <input
+                                                name="hatedetect_notify_user"
+                                                id="hatedetect_notify_user"
+                                                value="1"
+                                                type="checkbox"
+                                            <?php
+
+                                            // If the option isn't set, or if it's enabled ('1'), or if it was enabled a long time ago ('true'), check the checkbox.
+                                            checked(true, (in_array(get_option('hatedetect_notify_user'), array(false, '1', 'true'), true)));
+
+                                            ?>
+                                        />
+                                        <?php esc_html_e('Notify users in email about comment rejection (because of hate speech).', 'hatedetect'); ?>
+                                        <br>
+                                    </label>
                                 </p>
                             </td>
+                        </tr>
+                        <tr>
+                            <th align="left" scope="row"><?php esc_html_e('Comments', 'hatedetect'); ?></th>
+                            <td></td>
                         </tr>
                         <tr>
                             <th class="comment-form-privacy-notice" align="left"
