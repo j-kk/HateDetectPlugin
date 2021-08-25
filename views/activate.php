@@ -1,3 +1,3 @@
 <div class="hatedetect-box">
-	<?php Hatedetect::view( 'enter' );?>
+	<?php HateDetect::view( 'enter' );?>
 </div>

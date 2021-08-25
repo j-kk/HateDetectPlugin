@@ -8,7 +8,7 @@
     <div class="hatedetect-masthead">
         <div class="hatedetect-masthead__inside-container">
             <div class="hatedetect-masthead__logo-container">
-                <img class="hatedetect-masthead__logo" src="<?php echo esc_url( plugins_url( '../_inc/img/logo-full-2x.png', __FILE__ ) ); ?>" alt="Hatedetect" />
+                <img class="hatedetect-masthead__logo" src="<?php echo esc_url( plugins_url( '../_inc/img/logo-full-2x.png', __FILE__ ) ); ?>" alt="HateDetect" />
             </div>
         </div>
     </div>
