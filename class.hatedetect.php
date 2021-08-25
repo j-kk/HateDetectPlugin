@@ -8,8 +8,6 @@ class HateDetect
 
     private static bool $activated = false;
 
-    private static bool $notify_user = true;
-
     public static function plugin_activation()
     {
     }
@@ -98,6 +96,11 @@ class HateDetect
         if (!self::get_api_key()) {
             return false;
         }
+        $hate_explanation = get_comment_meta($id, 'hatedetect_explanation');
+        if (is_string($hate_explanation)) {
+            return $hate_explanation;
+        }
+
 
         $lang = 'en';  // TODO: change
         $request_args = array(
@@ -109,7 +112,9 @@ class HateDetect
 
         if (is_array($response[1])) {
             if (array_key_exists('explanation', $response[1])) {
-                return $response[1]['explanation'];
+                $hate_explanation = $response[1]['explanation'];
+                update_comment_meta($id, 'hatedetect_explanation', $hate_explanation);
+                return $hate_explanation;
             }
         }
 
@@ -122,7 +127,7 @@ class HateDetect
         return get_option('hatedetect_api_key');
     }
 
-    private static function check_ishate_response($id, $comment, $response)
+    private static function check_ishate_response(string $id, WP_Comment $comment, $response)
     {
 
         if (is_array($response[1])) {
@@ -133,16 +138,21 @@ class HateDetect
                     if ($ishate) {
                         update_comment_meta($comment->comment_ID, 'hatedetect_result', 1);
 
+                        $hate_explanation = self::check_why_hate($id, $comment);
+
                         // comment contains hate - discard
                         if (self::auto_discard()) {
                             wp_set_comment_status($comment->comment_ID, 'trash');
                         } else {
                             wp_set_comment_status($comment->comment_ID, 'hold');
                         }
-                        if (self::$notify_user) {
-                            $mail_message = "The owner of " . strval(get_the_permalink($comment->comment_post_ID)) . " would like to inform you that your comment was blocked due to hate detection. \n You have tired to send the following comment content: \n" . strval($comment->comment_content) . "\n to the post: \n" . strval(get_post_permalink($comment->comment_post_ID)) . "";
+                        if (self::notify_user()) {
+                            $mail_message = "The owner of " . strval(get_the_permalink($comment->comment_post_ID)) . " would like to inform you that your comment was blocked due to hate detection. \n You have tired to send the following comment content: \n" . strval($comment->comment_content) . "\n to the post: \n" . strval(get_post_permalink($comment->comment_post_ID));
+                            if (is_string($hate_explanation)) {
+                                $mail_message = $mail_message . "\n Reason: " . $hate_explanation;
+                            }
                             $headers = array('Content-Type: text/html; charset=UTF-8');
-                            wp_mail(strval($comment->comment_author_email), "Post rejected", $mail_message, $headers);
+                            wp_mail(strval($comment->comment_author_email), "Comment rejected", $mail_message, $headers);
                         }
                         return true;
                     } else {
@@ -393,7 +403,6 @@ class HateDetect
 
     public static function verify_key($key, $ip = null)
     {
-
         $response = self::check_key_status($key, $ip);
 
         if (!empty($response[1])) {
