@@ -21,11 +21,11 @@ class HateDetect
 
 
         // Remove any scheduled cron jobs.
-        $timestamp = wp_next_scheduled( 'hatedetect_schedule_cron_recheck', 'cron');
+        $timestamp = wp_next_scheduled( 'hatedetect_schedule_cron_recheck', array('cron'));
 
         if ( $timestamp ) {
             HateDetect::log('HateDetect deactivated cron');
-            wp_unschedule_event( $timestamp, 'hatedetect_schedule_cron_recheck', 'cron');
+            wp_unschedule_event( $timestamp, 'hatedetect_schedule_cron_recheck', array('cron'));
         }
         self::$activated = false;
     }
@@ -40,10 +40,10 @@ class HateDetect
             add_action('comment_form_after', array('HateDetect', 'display_comment_form_privacy_notice'));
 
             add_action('hatedetect_schedule_cron_recheck', array('HateDetect', 'cron_recheck'));
-            $timestamp = wp_next_scheduled('hatedetect_schedule_cron_recheck', 'cron');
+            $timestamp = wp_next_scheduled('hatedetect_schedule_cron_recheck', array('cron'));
 
             if ( !$timestamp ) {
-                wp_schedule_event(current_time('timestamp'), 'daily', 'hatedetect_schedule_cron_recheck', 'cron');
+                wp_schedule_event(current_time('timestamp'), 'daily', 'hatedetect_schedule_cron_recheck', array('cron'));
                 HateDetect::log('HateDetect activated cron');
             }
         }
@@ -341,7 +341,7 @@ class HateDetect
 
     public static function manual_schedule_cron_recheck(int $delay = null)
     {
-        $future_check = wp_next_scheduled('hatedetect_schedule_cron_recheck', 'recheck');
+        $future_check = wp_next_scheduled('hatedetect_schedule_cron_recheck', array('recheck'));
         self::log('future_check: '.$future_check." actual_time: ".time().'  delay:  '.$delay);
         if (is_null($delay)) {
             self::log('delay is null');
@@ -352,11 +352,11 @@ class HateDetect
             if ($future_check <= $time && $future_check > time()) {
                 return;
             } else {
-                wp_clear_scheduled_hook('hatedetect_schedule_cron_recheck', 'recheck');
+                wp_clear_scheduled_hook('hatedetect_schedule_cron_recheck', array('recheck'));
             }
         }
         self::log('Cron recheck scheduled at: '.$time.' Current time: '.time());
-        wp_schedule_single_event($time, 'hatedetect_schedule_cron_recheck', 'recheck');
+        wp_schedule_single_event($time, 'hatedetect_schedule_cron_recheck', array('recheck'));
     }
 
     public static function verify_key($key, $ip = null)
