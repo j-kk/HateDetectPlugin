@@ -132,27 +132,6 @@ class HateDetect_Admin
         )))) {
             wp_register_style('hatedetect.css', plugin_dir_url(__FILE__) . '_inc/hatedetect.css', array(), HATEDETECT_VERSION);
             wp_enqueue_style('hatedetect.css');
-
-            $inline_js = array(
-                'comment_author_url_nonce' => wp_create_nonce('comment_author_url_nonce'),
-                'strings' => array(
-                    'Remove this URL' => __('Remove this URL', 'hatedetect'),
-                    'Removing...' => __('Removing...', 'hatedetect'),
-                    'URL removed' => __('URL removed', 'hatedetect'),
-                    '(undo)' => __('(undo)', 'hatedetect'),
-                    'Re-adding...' => __('Re-adding...', 'hatedetect'),
-                )
-            );
-
-            if (isset($_GET['hatedetect_recheck']) && wp_verify_nonce($_GET['hatedetect_recheck'], 'hatedetect_recheck')) {
-                $inline_js['start_recheck'] = true;
-            }
-
-            if (apply_filters('hatedetect_enable_mshots', true)) {
-                $inline_js['enable_mshots'] = true;
-            }
-
-            wp_localize_script('hatedetect.js', 'WPHateDetect', $inline_js);
         }
     }
 
@@ -277,7 +256,7 @@ class HateDetect_Admin
         }
     }
 
-    public static function check_for_hate_button($comment_status) # TODO misia
+    public static function check_for_hate_button($comment_status) # TODO
     {
         // The "Check for Hate" button should only appear when the page might be showing
         // a comment with comment_approved=0, which means an un-trashed, un-hate,
