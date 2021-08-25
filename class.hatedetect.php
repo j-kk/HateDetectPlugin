@@ -2,8 +2,8 @@
 
 class HateDetect
 {
-    const API_HOST = 'hateapi';
-    const API_PORT = 80;
+    const API_HOST = '127.0.0.1';
+    const API_PORT = 5000;
     const MAX_DELAY_BEFORE_MODERATION_EMAIL = 86400; // One day in seconds
 
     private static bool $initiated = false;
@@ -80,15 +80,6 @@ class HateDetect
     public static function get_api_key()
     {
         return apply_filters('hatedetect_get_api_key', defined('WPCOM_API_KEY') ? constant('WPCOM_API_KEY') : get_option('hatedetect_api_key'));
-    }
-
-    public static function predefined_api_key()
-    {
-        if (defined('WPCOM_API_KEY')) {
-            return true;
-        }
-
-        return apply_filters('hatedetect_predefined_api_key', false);
     }
 
     private static function check_ishate_response($id, $comment, $response)

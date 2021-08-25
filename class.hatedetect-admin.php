@@ -105,7 +105,7 @@ class HateDetect_Admin
     {
         $settings_link = '<a href="' . esc_url(self::get_page_url()) . '">' . __('Settings', 'hatedetect') . '</a>';
         array_unshift($links, $settings_link);
-        HateDetect::log("admin_plugin_settings_links links:  " . $links);
+        HateDetect::log("admin_plugin_settings_links links:  " . wp_json_encode($links));
 
         return $links;
     }
@@ -217,7 +217,7 @@ class HateDetect_Admin
                         'title' => __('Settings', 'hatedetect'),
                         'content' =>
                             '<p><strong>' . esc_html__('HateDetect Configuration', 'hatedetect') . '</strong></p>' .
-                            (HateDetect::predefined_api_key() ? '' : '<p><strong>' . esc_html__('API Key', 'hatedetect') . '</strong> - ' . esc_html__('Enter/remove an API key.', 'hatedetect') . '</p>') .
+                            '<p><strong>' . esc_html__('API Key', 'hatedetect') . '</strong> - ' . esc_html__('Enter/remove an API key.', 'hatedetect') . '</p>'.
                             '<p><strong>' . esc_html__('Auto allow', 'hatedetect') . '</strong> - ' . esc_html__('Should plugin auto allow all comments which does not contain hate. (skips moderation verification)', 'hatedetect') . '</p>' .
                             '<p><strong>' . esc_html__('Auto discard', 'hatedetect') . '</strong> - ' . esc_html__('Choose to either discard hateful comments automatically or to hold them for moderator interaction.', 'hatedetect') . '</p>',
                     )
@@ -248,10 +248,6 @@ class HateDetect_Admin
             self::set_form_privacy_notice_option($_POST['hatedetect_comment_form_privacy_notice']);
         } else {
             self::set_form_privacy_notice_option('hide');
-        }
-
-        if (HateDetect::predefined_api_key()) {
-            return false; //shouldn't have option to save key if already defined
         }
 
         $new_key = $_POST['key'];
@@ -546,12 +542,12 @@ class HateDetect_Admin
 
     public static function plugin_action_links($links, $file)
     {
-        HateDetect::log("plugin_action_links entry links:  " . $links . "   file:   " . $file);
+        HateDetect::log("plugin_action_links entry links:  " . wp_json_encode($links) . "   file:   " . wp_json_encode($file));
         if ($file == plugin_basename(plugin_dir_url(__FILE__) . '/hatedetect.php')) {
             $links[] = '<a href="' . esc_url(self::get_page_url()) . '">' . esc_html__('Settings', 'hatedetect') . '</a>';
         }
 
-        HateDetect::log("plugin_action_links out links:  " . $links . "   file:   " . $file);
+        HateDetect::log("plugin_action_links out links:  " . wp_json_encode($links) . "   file:   " . wp_json_encode($file));
         return $links;
     }
 
