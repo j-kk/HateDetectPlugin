@@ -3,7 +3,7 @@
 class HateDetect_Admin
 {
     const NONCE = 'hatedetect-update-key';
-    public static $supported_langs = array('en', 'es');
+    const SUPPORTED_LANGS = array('en', 'es');
 
     private static $initiated = false;
     private static $key_status = null;
