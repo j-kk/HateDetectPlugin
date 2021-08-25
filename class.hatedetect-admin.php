@@ -3,7 +3,7 @@
 class HateDetect_Admin
 {
     const NONCE = 'hatedetect-update-key';
-    const SUPPORTED_LANGS = array('en', 'es');
+    const SUPPORTED_LANGS = array('en' => 'English', 'es' => 'Spanish');
 
     private static $initiated = false;
     private static $key_status = null;
@@ -219,7 +219,7 @@ class HateDetect_Admin
             update_option($option, isset($_POST[$option]) && (int)$_POST[$option] == 1 ? '1' : '0');
             HateDetect::log("Updated option: " . $option);
         }
-        if (in_array($_POST['hatedetect_lang'], HateDetect_Admin::SUPPORTED_LANGS)) {
+        if (array_key_exists($_POST['hatedetect_lang'], HateDetect_Admin::SUPPORTED_LANGS)) {
             add_option('hatedetect_lang', $_POST['hatedetect_lang']);
         }
 

@@ -131,8 +131,14 @@
                             </td>
                         </tr>
                         <tr>
-                            <th align="left" scope="row"><?php esc_html_e('Comments', 'hatedetect'); ?></th>
+                            <th align="left" scope="row"><?php esc_html_e('Language', 'hatedetect'); ?></th>
                             <td></td>
+                            <td><select>
+                                    <?php foreach ( HateDetect_Admin::SUPPORTED_LANGS as $lang => $langFullName) { ?>
+                                      <?php  echo "<option value='$lang'>" . $langFullName . "</option>"; ?>
+                                    <?php } ?>
+                                </select>
+                            </td>
                         </tr>
                         <tr>
                             <th class="comment-form-privacy-notice" align="left"
