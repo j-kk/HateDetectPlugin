@@ -76,10 +76,6 @@ class HateDetect_Admin
         }
 
         load_plugin_textdomain('hatedetect');
-        add_meta_box('hatedetect-status', __('Comment History', 'hatedetect'), array(
-            'HateDetect_Admin',
-            'comment_status_meta_box'
-        ), 'comment', 'normal');
 
         if (function_exists('wp_add_privacy_policy_content')) {
             wp_add_privacy_policy_content(
@@ -217,7 +213,7 @@ class HateDetect_Admin
                         'title' => __('Settings', 'hatedetect'),
                         'content' =>
                             '<p><strong>' . esc_html__('HateDetect Configuration', 'hatedetect') . '</strong></p>' .
-                            '<p><strong>' . esc_html__('API Key', 'hatedetect') . '</strong> - ' . esc_html__('Enter/remove an API key.', 'hatedetect') . '</p>'.
+                            '<p><strong>' . esc_html__('API Key', 'hatedetect') . '</strong> - ' . esc_html__('Enter/remove an API key.', 'hatedetect') . '</p>' .
                             '<p><strong>' . esc_html__('Auto allow', 'hatedetect') . '</strong> - ' . esc_html__('Should plugin auto allow all comments which does not contain hate. (skips moderation verification)', 'hatedetect') . '</p>' .
                             '<p><strong>' . esc_html__('Auto discard', 'hatedetect') . '</strong> - ' . esc_html__('Choose to either discard hateful comments automatically or to hold them for moderator interaction.', 'hatedetect') . '</p>',
                     )
@@ -283,8 +279,8 @@ class HateDetect_Admin
 
     public static function check_for_hate_button($comment_status) # TODO misia
     {
-        // The "Check for Spam" button should only appear when the page might be showing
-        // a comment with comment_approved=0, which means an un-trashed, un-spammed,
+        // The "Check for Hate" button should only appear when the page might be showing
+        // a comment with comment_approved=0, which means an un-trashed, un-hate,
         // not-yet-moderated comment.
         if ('all' != $comment_status && 'moderated' != $comment_status) {
             return;
@@ -299,7 +295,7 @@ class HateDetect_Admin
         # TODO
         $classes = array(
             'button-secondary',
-            'checkforspam',
+            'checkforhate',
             'button-disabled'    // Disable button until the page is loaded
         );
 
@@ -315,25 +311,25 @@ class HateDetect_Admin
         echo '<a
 				class="' . esc_attr(implode(' ', $classes)) . '"' .
             (!empty($link) ? ' href="' . esc_url($link) . '"' : '') .
-            /* translators: The placeholder is for showing how much of the process has completed, as a percent. e.g., "Checking for Spam (40%)" */
-            ' data-progress-label="' . esc_attr(__('Checking for Spam (%1$s%)', 'hatedetect')) . '"
+            /* translators: The placeholder is for showing how much of the process has completed, as a percent. e.g., "Checking for hate (40%)" */
+            ' data-progress-label="' . esc_attr(__('Checking for hate (%1$s%)', 'hatedetect')) . '"
 				data-success-url="' . esc_attr(remove_query_arg(array(
                 'hatedetect_recheck',
                 'hatedetect_recheck_error'
             ), add_query_arg(array(
                 'hatedetect_recheck_complete' => 1,
                 'recheck_count' => urlencode('__recheck_count__'),
-                'spam_count' => urlencode('__spam_count__')
+                'hate_count' => urlencode('__hate_count__')
             )))) . '"
 				data-failure-url="' . esc_attr(remove_query_arg(array(
                 'hatedetect_recheck',
                 'hatedetect_recheck_complete'
             ), add_query_arg(array('hatedetect_recheck_error' => 1)))) . '"
 				data-pending-comment-count="' . esc_attr($comments_count->moderated) . '"
-				data-nonce="' . esc_attr(wp_create_nonce('hatedetect_check_for_spam')) . '"
+				data-nonce="' . esc_attr(wp_create_nonce('hatedetect_check_for_hate')) . '"
 				' . (!in_array('ajax-disabled', $classes) ? 'onclick="return false;"' : '') . '
 				>' . esc_html__('Check for Hate', 'hatedetect') . '</a>';
-        echo '<span class="checkforspam-spinner"></span>';
+        echo '<span class="checkforhate-spinner"></span>';
     }
 
     public static function recheck_queue()
@@ -346,7 +342,7 @@ class HateDetect_Admin
             return;
         }
 
-        if (!wp_verify_nonce($_POST['nonce'], 'hatedetect_check_for_spam')) {
+        if (!wp_verify_nonce($_POST['nonce'], 'hatedetect_check_for_hate')) {
             wp_send_json(array(
                 'error' => __("You don't have permission to do that."),
             ));
@@ -386,7 +382,7 @@ class HateDetect_Admin
 
         $result_counts = array(
             'processed' => count($moderation),
-            'spam' => 0,
+            'hate' => 0,
             'ham' => 0,
             'error' => 0,
         );
@@ -395,7 +391,7 @@ class HateDetect_Admin
             $api_response = HateDetect::recheck_comment($comment_id, 'recheck_queue');
 
             if ('true' === $api_response) {
-                ++$result_counts['spam'];
+                ++$result_counts['hate'];
             } elseif ('false' === $api_response) {
                 ++$result_counts['ham'];
             } else {
@@ -407,137 +403,33 @@ class HateDetect_Admin
     }
 
     # TODO
-    public static function comment_row_action($a, $comment)
+    public static function comment_row_action($a, WP_Comment $comment)
     {
         $hatedetect_result = get_comment_meta($comment->comment_ID, 'hatedetect_result', true);
         $hatedetect_error = get_comment_meta($comment->comment_ID, 'hatedetect_error', true);
         $comment_status = wp_get_comment_status($comment->comment_ID);
         $desc = null;
         $desc_on_hover = null;
+        HateDetect::log('Comment row action, id: ' . $comment->comment_ID . ' result:' . $hatedetect_result . " error: " . $hatedetect_error);
         if ($hatedetect_error) {
             $desc = __('Awaiting hate check', 'hatedetect');
             $desc_on_hover = __('Plugin was unable to connect to HateDetect servers. Comment will be checked again soon.', 'hatedetect');
-        } elseif ($hatedetect_result) {
-            if ( $hatedetect_result === 1) {
+        } elseif (!is_null($hatedetect_result)) {
+            if ($hatedetect_result === '1') {
                 $desc = __('Hate speech', 'hatedetect');
             } else {
+
                 $desc = __('OK', 'hatedetect');
             }
             $desc_on_hover = $desc;
         }
 
+        HateDetect::log('Comment row action, id: ' . $comment->comment_ID . ' desc:' . $desc);
         if ($desc) {
             echo '<span class="hatedetect-status" commentid="' . $comment->comment_ID . '"><a href="comment.php?action=editcomment&amp;c=' . $comment->comment_ID . '#hatedetect-status" title="' . esc_attr($desc_on_hover) . '">' . esc_html($desc) . '</a></span>';
         }
 
         return $a;
-    }
-
-    public static function comment_status_meta_box($comment)
-    {
-        $history = HateDetect::get_comment_history($comment->comment_ID);
-
-        if ($history) {
-            foreach ($history as $row) {
-                $time = date('D d M Y @ h:i:s a', $row['time']) . ' GMT';
-
-                $message = '';
-
-                if (!empty($row['message'])) {
-                    // Old versions of HateDetect stored the message as a literal string in the commentmeta.
-                    // New versions don't do that for two reasons:
-                    // 1) Save space.
-                    // 2) The message can be translated into the current language of the blog, not stuck
-                    //    in the language of the blog when the comment was made.
-                    $message = esc_html($row['message']);
-                }
-
-                // If possible, use a current translation.
-                switch ($row['event']) {
-                    case 'recheck-spam';
-                        $message = esc_html(__('HateDetect re-checked and caught this comment as spam.', 'hatedetect'));
-                        break;
-                    case 'check-spam':
-                        $message = esc_html(__('HateDetect caught this comment as spam.', 'hatedetect'));
-                        break;
-                    case 'recheck-ham':
-                        $message = esc_html(__('HateDetect re-checked and cleared this comment.', 'hatedetect'));
-                        break;
-                    case 'check-ham':
-                        $message = esc_html(__('HateDetect cleared this comment.', 'hatedetect'));
-                        break;
-                    case 'wp-blacklisted':
-                    case 'wp-disallowed':
-                        $message = sprintf(
-                        /* translators: The placeholder is a WordPress PHP function name. */
-                            esc_html(__('Comment was caught by %s.', 'hatedetect')),
-                            function_exists('wp_check_comment_disallowed_list') ? '<code>wp_check_comment_disallowed_list</code>' : '<code>wp_blacklist_check</code>'
-                        );
-                        break;
-                    case 'report-spam':
-                        if (isset($row['user'])) {
-                            $message = esc_html(sprintf(__('%s reported this comment as spam.', 'hatedetect'), $row['user']));
-                        } else if (!$message) {
-                            $message = esc_html(__('This comment was reported as spam.', 'hatedetect'));
-                        }
-                        break;
-                    case 'report-ham':
-                        if (isset($row['user'])) {
-                            $message = esc_html(sprintf(__('%s reported this comment as not spam.', 'hatedetect'), $row['user']));
-                        } else if (!$message) {
-                            $message = esc_html(__('This comment was reported as not spam.', 'hatedetect'));
-                        }
-                        break;
-                    case 'cron-retry-spam':
-                        $message = esc_html(__('HateDetect caught this comment as spam during an automatic retry.', 'hatedetect'));
-                        break;
-                    case 'cron-retry-ham':
-                        $message = esc_html(__('HateDetect cleared this comment during an automatic retry.', 'hatedetect'));
-                        break;
-                    case 'check-error':
-                        if (isset($row['meta'], $row['meta']['response'])) {
-                            $message = sprintf(esc_html(__('HateDetect was unable to check this comment (response: %s) but will automatically retry later.', 'hatedetect')), '<code>' . esc_html($row['meta']['response']) . '</code>');
-                        } else {
-                            $message = esc_html(__('HateDetect was unable to check this comment but will automatically retry later.', 'hatedetect'));
-                        }
-                        break;
-                    case 'recheck-error':
-                        if (isset($row['meta'], $row['meta']['response'])) {
-                            $message = sprintf(esc_html(__('HateDetect was unable to recheck this comment (response: %s).', 'hatedetect')), '<code>' . esc_html($row['meta']['response']) . '</code>');
-                        } else {
-                            $message = esc_html(__('HateDetect was unable to recheck this comment.', 'hatedetect'));
-                        }
-                        break;
-                    default:
-                        if (preg_match('/^status-changed/', $row['event'])) {
-                            // Half of these used to be saved without the dash after 'status-changed'.
-                            // See https://plugins.trac.wordpress.org/changeset/1150658/hatedetect/trunk
-                            $new_status = preg_replace('/^status-changed-?/', '', $row['event']);
-                            $message = sprintf(esc_html(__('Comment status was changed to %s', 'hatedetect')), '<code>' . esc_html($new_status) . '</code>');
-                        } else if (preg_match('/^status-/', $row['event'])) {
-                            $new_status = preg_replace('/^status-/', '', $row['event']);
-
-                            if (isset($row['user'])) {
-                                $message = sprintf(esc_html(__('%1$s changed the comment status to %2$s.', 'hatedetect')), $row['user'], '<code>' . esc_html($new_status) . '</code>');
-                            }
-                        }
-                        break;
-
-                }
-
-                if (!empty($message)) {
-                    echo '<p>';
-                    echo '<span style="color: #999;" alt="' . $time . '" title="' . $time . '">' . sprintf(esc_html__('%s ago', 'hatedetect'), human_time_diff($row['time'])) . '</span>';
-                    echo ' - ';
-                    echo $message; // esc_html() is done above so that we can use HTML in some messages.
-                    echo '</p>';
-                }
-            }
-        } else {
-            echo '<p>';
-            echo esc_html(__('No comment history.', 'hatedetect'));
-            echo '</p>';
-        }
     }
 
     public static function plugin_action_links($links, $file)
@@ -709,7 +601,7 @@ class HateDetect_Admin
 
         if (isset($_GET['hatedetect_recheck_complete'])) {
             $recheck_count = (int)$_GET['recheck_count'];
-            $spam_count = (int)$_GET['spam_count'];
+            $hate_count = (int)$_GET['hate_count'];
 
             if ($recheck_count === 0) {
                 $message = __('There were no comments to check. HateDetect will only check comments awaiting moderation.', 'hatedetect');
@@ -717,16 +609,16 @@ class HateDetect_Admin
                 $message = sprintf(_n('HateDetect checked %s comment.', 'HateDetect checked %s comments.', $recheck_count, 'hatedetect'), number_format($recheck_count));
                 $message .= ' ';
 
-                if ($spam_count === 0) {
-                    $message .= __('No comments were caught as spam.', 'hatedetect');
+                if ($hate_count === 0) {
+                    $message .= __('No comments were caught as hate.', 'hatedetect');
                 } else {
-                    $message .= sprintf(_n('%s comment was caught as spam.', '%s comments were caught as spam.', $spam_count, 'hatedetect'), number_format($spam_count));
+                    $message .= sprintf(_n('%s comment was caught as hate.', '%s comments were caught as hate.', $hate_count, 'hatedetect'), number_format($hate_count));
                 }
             }
 
             echo '<div class="notice notice-success"><p>' . esc_html($message) . '</p></div>';
         } else if (isset($_GET['hatedetect_recheck_error'])) {
-            echo '<div class="notice notice-error"><p>' . esc_html(__('HateDetect could not recheck your comments for spam.', 'hatedetect')) . '</p></div>';
+            echo '<div class="notice notice-error"><p>' . esc_html(__('HateDetect could not recheck your comments for hate.', 'hatedetect')) . '</p></div>';
         }
     }
 
@@ -765,7 +657,6 @@ class HateDetect_Admin
             }
         }
     }
-
 
 
     private static function set_form_privacy_notice_option($state)

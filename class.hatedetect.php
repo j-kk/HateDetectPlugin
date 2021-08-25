@@ -6,10 +6,9 @@ class HateDetect
     const API_PORT = 5000;
     const MAX_DELAY_BEFORE_MODERATION_EMAIL = 86400; // One day in seconds
 
-    private static bool $initiated = false;
+    private static bool $activated = false;
 
     public static function plugin_activation () {
-        wp_schedule_event(current_time('timestamp'), 'daily', 'hatedetect_schedule_cron_recheck');
     }
 
     /**
@@ -17,32 +16,39 @@ class HateDetect
      * @static
      */
     public static function plugin_deactivation( ) {
+        HateDetect::log('HateDetect deactivated');
         delete_option('hatedetect_api_key');
 
+
         // Remove any scheduled cron jobs.
-        $timestamp = wp_next_scheduled( 'hatedetect_schedule_cron_recheck' );
+        $timestamp = wp_next_scheduled( 'hatedetect_schedule_cron_recheck', 'cron');
 
         if ( $timestamp ) {
-            wp_unschedule_event( $timestamp, 'hatedetect_schedule_cron_recheck' );
+            HateDetect::log('HateDetect deactivated cron');
+            wp_unschedule_event( $timestamp, 'hatedetect_schedule_cron_recheck', 'cron');
         }
+        self::$activated = false;
     }
 
     public static function init()
     {
-        if (!self::$initiated) {
-            self::init_hooks();
+        if (!self::$activated) {
+            self::$activated = true;
+            HateDetect::log('HateDetect activated');
+
+            add_action('wp_insert_comment', array('HateDetect', 'check_comment'), 10, 2);
+            add_action('comment_form_after', array('HateDetect', 'display_comment_form_privacy_notice'));
+
+            add_action('hatedetect_schedule_cron_recheck', array('HateDetect', 'cron_recheck'));
+            $timestamp = wp_next_scheduled('hatedetect_schedule_cron_recheck', 'cron');
+
+            if ( !$timestamp ) {
+                wp_schedule_event(current_time('timestamp'), 'daily', 'hatedetect_schedule_cron_recheck', 'cron');
+                HateDetect::log('HateDetect activated cron');
+            }
         }
     }
 
-    private static function init_hooks()
-    {
-        HateDetect::$initiated = true;
-
-        add_action('wp_insert_comment', array('HateDetect', 'check_comment'), 10, 2);
-        add_action('comment_form_after', array('HateDetect', 'display_comment_form_privacy_notice'));
-
-        add_action('hatedetect_schedule_cron_recheck', array('HateDetect', 'cron_recheck'));
-    }
 
     public static function auto_allow()
     {
@@ -75,6 +81,11 @@ class HateDetect
         $response = self::http_post($request_args, 'ishate');
 
         self::check_ishate_response($id, $comment, $response);
+    }
+
+    public static function check_why_hate(int $id, WP_Comment $comment)
+    {
+        # TODO
     }
 
     public static function get_api_key()
@@ -112,21 +123,18 @@ class HateDetect
                 } else {
                     self::log('Comment_id: ' . $id . " other_id: " . $comment->comment_ID . " IsHate is not a bool");
                     update_comment_meta($comment->comment_ID, 'hatedetect_error', 1);
-                    # TODO invalid response -> postpone validation
                     wp_set_comment_status($comment->comment_ID, 'hold');
                 }
             } else {
                 self::log('Comment_id: ' . $id . " other_id: " . $comment->comment_ID . " No response field");
                 update_comment_meta($comment->comment_ID, 'hatedetect_error', 1);
-                # TODO no response -> postpone validation
-                # Otherwise, do not approve automatically comment, because it may be spam
+                # Otherwise, do not approve automatically comment, because it may be hate
                 wp_set_comment_status($comment->comment_ID, 'hold');
             }
         } else {
             self::log('Comment_id: ' . $id . " other_id: " . $comment->comment_ID . " Did not connect");
             update_comment_meta($comment->comment_ID, 'hatedetect_error', 1);
-            # TODO empty response -> postpone validation
-            # Otherwise, do not approve automatically comment, because it may be spam
+            # Otherwise, do not approve automatically comment, because it may be hate
             wp_set_comment_status($comment->comment_ID, 'hold');
         }
         return false;
@@ -159,9 +167,9 @@ class HateDetect
     }
 
 
-    public static function cron_recheck()
+    public static function cron_recheck(string $reason = 'unknown')
     {
-        self::log('Performing cron_recheck');
+        self::log('Performing cron_recheck, reason: '.$reason);
         global $wpdb;
         $api_key = self::get_api_key();
 
@@ -333,7 +341,7 @@ class HateDetect
 
     public static function manual_schedule_cron_recheck(int $delay = null)
     {
-        $future_check = wp_next_scheduled('hatedetect_schedule_cron_recheck');
+        $future_check = wp_next_scheduled('hatedetect_schedule_cron_recheck', 'recheck');
         self::log('future_check: '.$future_check." actual_time: ".time().'  delay:  '.$delay);
         if (is_null($delay)) {
             self::log('delay is null');
@@ -344,11 +352,11 @@ class HateDetect
             if ($future_check <= $time && $future_check > time()) {
                 return;
             } else {
-                wp_clear_scheduled_hook('hatedetect_schedule_cron_recheck');
+                wp_clear_scheduled_hook('hatedetect_schedule_cron_recheck', 'recheck');
             }
         }
         self::log('Cron recheck scheduled at: '.$time.' Current time: '.time());
-        wp_schedule_single_event($time, 'hatedetect_schedule_cron_recheck');
+        wp_schedule_single_event($time, 'hatedetect_schedule_cron_recheck', 'recheck');
     }
 
     public static function verify_key($key, $ip = null)
