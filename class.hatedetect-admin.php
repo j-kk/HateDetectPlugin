@@ -215,9 +215,12 @@ class HateDetect_Admin
 
         foreach (array('hatedetect_auto_allow',
                      'hatedetect_auto_discard',
-                     'hatedetect_show_user_comments_approved') as $option) {
+                     'hatedetect_notify_user') as $option) {
             update_option($option, isset($_POST[$option]) && (int)$_POST[$option] == 1 ? '1' : '0');
             HateDetect::log("Updated option: " . $option);
+        }
+        if (in_array($_POST['hatedetect_lang'], HateDetect_Admin::SUPPORTED_LANGS)) {
+            add_option('hatedetect_lang', $_POST['hatedetect_lang']);
         }
 
         if (!empty($_POST['hatedetect_comment_form_privacy_notice'])) {
@@ -316,8 +319,6 @@ class HateDetect_Admin
     {
         global $wpdb;
 
-        HateDetect::fix_scheduled_recheck();
-
         if (!(isset($_GET['recheckqueue']) || (isset($_REQUEST['action']) && 'hatedetect_recheck_queue' == $_REQUEST['action']))) {
             return;
         }
@@ -396,7 +397,7 @@ class HateDetect_Admin
             $desc_on_hover = __('Plugin was unable to connect to HateDetect servers. Comment will be checked again soon.', 'hatedetect');
         } elseif (!is_null($hatedetect_result)) {
             if ($hatedetect_result === '1') {
-                $desc = __('Hate speech', 'hatedetect');
+                $desc = __('Hate speech, reason: ' . HateDetect::check_why_hate($comment->comment_ID, $comment), 'hatedetect');
             } else {
 
                 $desc = __('OK', 'hatedetect');
