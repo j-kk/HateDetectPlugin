@@ -79,7 +79,7 @@
                             <td align="left">
                                 <p>
                                     <label for="hatedetect_auto_allow"
-                                           title="<?php esc_attr_e('Show approved comments', 'hatedetect'); ?>">
+                                           title="<?php esc_attr_e('Automatically allow comments without hate.', 'hatedetect'); ?>">
                                         <input
                                                 name="hatedetect_auto_allow"
                                                 id="hatedetect_auto_allow"
@@ -94,6 +94,9 @@
                                         />
                                         <?php esc_html_e('Automatically allow comments without hate.', 'hatedetect'); ?>
                                         <br>
+                                    </label>
+                                    <label for="hatedetect_auto_discard"
+                                           title="<?php esc_attr_e('Automatically discard to trash hateful comments.', 'hatedetect'); ?>">
                                         <input
                                                 name="hatedetect_auto_discard"
                                                 id="hatedetect_auto_discard"
@@ -102,11 +105,12 @@
                                             <?php
 
                                             // If the option isn't set, or if it's enabled ('1'), or if it was enabled a long time ago ('true'), check the checkbox.
-                                                checked(true, (in_array(get_option('hatedetect_auto_discard'), array(false, '1', 'true'), true)));
+                                            checked(true, (in_array(get_option('hatedetect_auto_discard'), array(false, '1', 'true'), true)));
 
                                             ?>
                                         />
                                         <?php esc_html_e('Automatically discard to trash hateful comments.', 'hatedetect'); ?>
+                                        <br>
                                     </label>
                                 </p>
                             </td>
@@ -152,6 +156,31 @@
                         <div class="clear"></div>
                     </div>
                 </form>
+            </div>
+        </div>
+        <div class="hatedetect-card">
+            <div class="hatedetect-section-header">
+                <div class="hatedetect-section-header__label">
+                    <span><?php esc_html_e( 'Stats' , 'hatedetect'); ?></span>
+                </div>
+            </div>
+
+            <div class="inside">
+<!--                    <div class="hatedetect-new-snapshot">-->
+                    <ul>
+                        <li>
+                            <h3><?php esc_html_e( 'Comments approved' , 'hatedetect');?></h3>
+                            <span><?php echo number_format(HateDetect::get_user_comments_approved() );?></span>
+                        </li>
+                        <li>
+                            <h3><?php esc_html_e( 'Comments rejected' , 'hatedetect');?></h3>
+                            <span><?php echo number_format( HateDetect::get_user_comments_rejected() );?></span>
+                        </li>
+                        <li>
+                            <h3><?php esc_html_e( 'Comments queued' , 'hatedetect');?></h3>
+                            <span><?php echo number_format( HateDetect::get_user_comments_queued() ); ?></span>
+                            </li>
+                    </ul>
             </div>
         </div>
     </div>
