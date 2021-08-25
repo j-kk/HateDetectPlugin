@@ -66,7 +66,12 @@ class HateDetect
 
     public static function notify_user()
     {
-        return (get_option('hatedetect_show_user_comments_approved') === '1');
+        return (get_option('hatedetect_notify_user') === '1');
+    }
+
+    public static function get_language()
+    {
+        return get_option('hatedetect_lang');
     }
 
     public static function check_comment(int $id, WP_Comment $comment)
@@ -114,7 +119,7 @@ class HateDetect
 
     public static function get_api_key()
     {
-        return apply_filters('hatedetect_get_api_key', defined('WPCOM_API_KEY') ? constant('WPCOM_API_KEY') : get_option('hatedetect_api_key'));
+        return get_option('hatedetect_api_key');
     }
 
     private static function check_ishate_response($id, $comment, $response)

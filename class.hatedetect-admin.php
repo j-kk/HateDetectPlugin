@@ -3,6 +3,7 @@
 class HateDetect_Admin
 {
     const NONCE = 'hatedetect-update-key';
+    public static $supported_langs = array('en', 'es');
 
     private static $initiated = false;
     private static $key_status = null;
@@ -540,8 +541,11 @@ class HateDetect_Admin
         if (get_option('hatedetect_auto_allow') === false) {
             add_option('hatedetect_auto_allow', '0');
         }
-        if (get_option('hatedetect_show_user_comments_approved') === false) {
-            add_option('hatedetect_show_user_comments_approved', '0');
+        if (get_option('hatedetect_notify_user') === false) {
+            add_option('hatedetect_notify_user', '0');
+        }
+        if (get_option('hatedetect_lang') === false) {
+            add_option('hatedetect_lang', 'en');
         }
 
         HateDetect::view('config', compact('api_key'));
