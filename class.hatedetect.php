@@ -8,6 +8,8 @@ class HateDetect
 
     private static bool $activated = false;
 
+    private static bool $notify_user = true;
+
     public static function plugin_activation () {
     }
 
@@ -110,8 +112,11 @@ class HateDetect
                         } else {
                             wp_set_comment_status($comment->comment_ID, 'hold');
                         }
-
-                        // TODO send mail to user
+                        if ( self::$notify_user ) {
+                            $mail_message = "The owner of ".strval(get_the_permalink($comment->comment_post_ID))." would like to inform you that your comment was blocked due to hate detection. \n You have tired to send the following comment content: \n".strval($comment->comment_content)."\n to the post: \n".strval(get_post_permalink($comment->comment_post_ID))."";
+                            $headers = array('Content-Type: text/html; charset=UTF-8');
+                            wp_mail(strval($comment->comment_author_email), "Post rejected", $mail_message, $headers );
+                        }
                         return true;
                     } else {
                         update_comment_meta($comment->comment_ID, 'hatedetect_result', 0);
