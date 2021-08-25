@@ -76,11 +76,11 @@ table.comments td.comment p a:after {
     height: 338px;
     width: 450px;
 }
-.checkforspam {
+.checkforhate {
     display: inline-block !important;
 }
 
-.checkforspam-spinner {
+.checkforhate-spinner {
     display: inline-block;
     margin-top: 7px;
 }
