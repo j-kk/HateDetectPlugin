@@ -29,22 +29,6 @@
                 <form action="<?php echo esc_url(HateDetect_Admin::get_page_url()); ?>" method="POST">
                     <table cellspacing="0" class="hatedetect-settings">
                         <tbody>
-                        <!--                        TODO api key -->
-                        <?php if (!HateDetect::predefined_api_key()) { ?>
-                            <tr>
-                                <th class="hatedetect-api-key" width="10%" align="left"
-                                    scope="row"><?php esc_html_e('API Key', 'hatedetect'); ?></th>
-                                <td width="5%"/>
-                                <td align="left">
-                                    <span class="api-key"><input id="key" name="key" type="text" size="15"
-                                                                 value="<?php echo esc_attr(get_option('hatedetect_api_key')); ?>"
-                                                                 class="<?php echo esc_attr('regular-text code '); ?>">
-                                    </span>
-                                    <span class='hatedetect-key-status'>Status: <?php echo esc_attr(HateDetect_Admin::get_status()); ?>
-                                    </span>
-                                </td>
-                            </tr>
-                        <?php } ?>
                         <?php if (isset($_GET['ssl_status'])) { ?>
                             <tr>
                                 <th align="left" scope="row"><?php esc_html_e('SSL Status', 'hatedetect'); ?></th>
@@ -140,12 +124,7 @@
                         </tbody>
                     </table>
                     <div class="hatedetect-card-actions">
-                        <?php if (!HateDetect::predefined_api_key()) { ?>
-                            <div id="delete-action">
-                                <a class="submitdelete deletion"
-                                   href="<?php echo esc_url(HateDetect_Admin::get_page_url('delete_key')); ?>"><?php esc_html_e('Disconnect this account', 'hatedetect'); ?></a>
-                            </div>
-                        <?php } ?>
+
                         <?php wp_nonce_field(HateDetect_Admin::NONCE) ?>
                         <div id="publishing-action">
                             <input type="hidden" name="action" value="enter-key">
