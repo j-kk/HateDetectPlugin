@@ -219,10 +219,11 @@ class HateDetect_Admin
             update_option($option, isset($_POST[$option]) && (int)$_POST[$option] == 1 ? '1' : '0');
             HateDetect::log("Updated option: " . $option);
         }
-        if (array_key_exists($_POST['hatedetect_lang'], HateDetect_Admin::SUPPORTED_LANGS)) {
-            add_option('hatedetect_lang', $_POST['hatedetect_lang']);
+        if (isset($_POST['hatedetect_lang'])) {
+            if (array_key_exists($_POST['hatedetect_lang'], HateDetect_Admin::SUPPORTED_LANGS)) {
+                add_option('hatedetect_lang', $_POST['hatedetect_lang']);
+            }
         }
-
         if (!empty($_POST['hatedetect_comment_form_privacy_notice'])) {
             self::set_form_privacy_notice_option($_POST['hatedetect_comment_form_privacy_notice']);
         } else {
