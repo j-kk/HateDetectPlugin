@@ -133,7 +133,7 @@
                         <tr>
                             <th align="left" scope="row"><?php esc_html_e('Language', 'hatedetect'); ?></th>
                             <td></td>
-                            <td><select>
+                            <td><select name="hatedetect_lang">
                                     <?php foreach ( HateDetect_Admin::SUPPORTED_LANGS as $lang => $langFullName) { ?>
                                       <?php  echo "<option value='$lang'>" . $langFullName . "</option>"; ?>
                                     <?php } ?>
