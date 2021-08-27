@@ -2,8 +2,8 @@
 
 class HateDetect
 {
-    const API_HOST = '127.0.0.1';
-    const API_PORT = 5000;
+    const API_HOST = 'hateapi';
+    const API_PORT = 80;
     const MAX_DELAY_BEFORE_MODERATION_EMAIL = 86400; // One day in seconds
 
     private static bool $activated = false;
@@ -40,6 +40,7 @@ class HateDetect
 
             add_action('wp_insert_comment', array('HateDetect', 'check_comment'), 10, 2);
             add_action('comment_form_after', array('HateDetect', 'display_comment_form_privacy_notice'));
+            add_filter('comment_text', array('HateDetect', 'display_after_posting_comment'), 10, 2);
 
             add_action('hatedetect_schedule_cron_recheck', array('HateDetect', 'cron_recheck'));
             $timestamp = wp_next_scheduled('hatedetect_schedule_cron_recheck', array('cron'));
@@ -49,6 +50,27 @@ class HateDetect
                 HateDetect::log('HateDetect activated cron');
             }
         }
+    }
+
+
+    public static function display_after_posting_comment(string $comment_text, $comment)
+    {
+        if (is_null($comment)) {
+            return $comment_text;
+        }
+        $comment_meta = get_comment_meta($comment->comment_ID);
+        if (array_key_exists('hatedetect_result', $comment_meta)) {
+            if ($comment_meta['hatedetect_result'][0] == 1) {
+                if ($comment->comment_approved == 1) {
+                    return $comment_text;
+                } else if (get_option('hatedetect_show_comment_field_message', 'show') === 'show') {
+                    $message = "Your comment was marked as a hateful by HateDetect plugin. \n \n ";
+                    echo "<div> <em> " . $message . "</em>  </div>";
+                    return $comment_text;
+                }
+            }
+        }
+        return $comment_text;
     }
 
 
@@ -138,8 +160,6 @@ class HateDetect
                     if ($ishate) {
                         update_comment_meta($comment->comment_ID, 'hatedetect_result', 1);
 
-                        $hate_explanation = self::check_why_hate($id, $comment);
-
                         // comment contains hate - discard
                         if (self::auto_discard()) {
                             wp_set_comment_status($comment->comment_ID, 'trash');
@@ -147,6 +167,7 @@ class HateDetect
                             wp_set_comment_status($comment->comment_ID, 'hold');
                         }
                         if (self::notify_user()) {
+                            $hate_explanation = self::check_why_hate($id, $comment);
                             $mail_message = "The owner of " . strval(get_the_permalink($comment->comment_post_ID)) . " would like to inform you that your comment was blocked due to hate detection. \n You have tired to send the following comment content: \n" . strval($comment->comment_content) . "\n to the post: \n" . strval(get_post_permalink($comment->comment_post_ID));
                             if (is_string($hate_explanation)) {
                                 $mail_message = $mail_message . "\n Reason: " . $hate_explanation;
