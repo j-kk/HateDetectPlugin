@@ -61,6 +61,10 @@ class HateDetect_Admin
             'admin_plugin_settings_link'
         ));
 
+        add_filter('comment_row_actions', array('HateDetect_Admin', 'modify_comments_list_row_actions'), 100, 2);
+        add_action('wp_ajax_check_for_hate', array('HateDetect_Admin', 'admin_action_comment_check_for_hate'));
+        add_action('wp_ajax_explain_hate', array('HateDetect_Admin', 'admin_action_comment_explain_hate'));
+
 
     }
 
@@ -659,5 +663,59 @@ class HateDetect_Admin
             update_option('hatedetect_comment_form_privacy_notice', $state);
         }
     }
+
+
+    public static function modify_comments_list_row_actions($actions, WP_Comment $comment)
+    {
+        $nonce = wp_create_nonce('check_for_hate');
+        $screen = get_current_screen();
+        $args = array(
+            'c' => $comment->comment_ID,
+            'action' => 'check_for_hate',
+            'another_query' => '1',
+            '_wpnonce' => $nonce,
+            'refer' => $screen->parent_file
+        );
+        $link = esc_url(add_query_arg($args, admin_url('admin-ajax.php')));
+        $actions['hatedetect_check_hate'] = sprintf('<a href="%s" style="color:orange">Check for hate</a>', $link);
+
+
+        if (get_comment_meta($comment->comment_ID, 'hatedetect_result', true) === '1') {
+            $nonce2 = wp_create_nonce('explain_hate');
+            $screen2 = get_current_screen();
+            $args2 = array(
+                'c' => $comment->comment_ID,
+                'action' => 'explain_hate',
+                'another_query' => '1',
+                '_wpnonce' => $nonce2,
+                'refer' => $screen2->parent_file
+            );
+            $link2 = esc_url(add_query_arg($args2, admin_url('admin-ajax.php')));
+            $actions['hatedetect_explain_hate'] = sprintf('<a href="%s" style="color:orange">Explain why hate</a>', $link2);
+        }
+        return $actions;
+    }
+
+
+    public static function admin_action_comment_check_for_hate()
+    {
+        if (wp_verify_nonce($_REQUEST['_wpnonce'], 'check_for_hate')) {
+            $id = $_REQUEST['c'];
+            HateDetect::check_comment($id, get_comment($id));
+            wp_redirect(admin_url($_REQUEST['refer']));
+        } else wp_redirect(home_url());
+        exit;
+    }
+
+    public static function admin_action_comment_explain_hate()
+    {
+        if (wp_verify_nonce($_REQUEST['_wpnonce'], 'explain_hate')) {
+            $id = $_REQUEST['c'];
+            HateDetect::check_why_hate($id, get_comment($id));
+            wp_redirect(admin_url($_REQUEST['refer']));
+        } else wp_redirect(home_url());
+        exit;
+    }
+
 
 }
