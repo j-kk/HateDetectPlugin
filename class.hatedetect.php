@@ -58,14 +58,28 @@ class HateDetect
         if (is_null($comment)) {
             return $comment_text;
         }
-        $comment_meta = get_comment_meta($comment->comment_ID);
+        $id = $comment->comment_ID;
+        $comment_meta = get_comment_meta($id);
         if (array_key_exists('hatedetect_result', $comment_meta)) {
             if ($comment_meta['hatedetect_result'][0] == 1) {
                 if ($comment->comment_approved == 1) {
                     return $comment_text;
                 } else if (get_option('hatedetect_show_comment_field_message', 'show') === 'show') {
-                    $message = "Your comment was marked as a hateful by HateDetect plugin. \n \n ";
-                    echo "<div> <em> " . $message . "</em>  </div>";
+                    $message = "Your comment was marked as a hateful by HateDetect plugin.";
+                    echo "<em> " . $message . "</em>";
+
+                    function explain_print($wp_comment)
+                    {
+                        $explanation = HateDetect::check_why_hate($wp_comment->comment_ID, $wp_comment);
+                        echo "<em> The model explanation: " . $explanation . " </em> <br> <br>";
+                    }
+
+                    echo ' <form  method="post">
+                           <input type="submit" name="explain" value="Explain why the comment is hateful">
+                           </form>';
+                    if (array_key_exists('explain', $_POST) and $_POST['explain'] and $_SERVER['REQUEST_METHOD'] == "POST") {
+                        explain_print($comment);
+                    }
                     return $comment_text;
                 }
             }
@@ -124,7 +138,7 @@ class HateDetect
         }
 
 
-        $lang = 'en';  // TODO: change
+        $lang = get_option('hatedetect_lang');
         $request_args = array(
             'text' => $comment->comment_content,
             'language' => $lang
