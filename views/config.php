@@ -109,7 +109,14 @@
                                         <?php esc_html_e('Automatically discard to trash hateful comments.', 'hatedetect'); ?>
                                         <br>
                                     </label>
-
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th align="left" scope="row"><?php esc_html_e('Notifications', 'hatedetect'); ?></th>
+                            <td></td>
+                            <td align="left">
+                                <p>
                                     <label for="hatedetect_notify_user"
                                            title="<?php esc_attr_e('Notify users in email about comment rejection (because of hate speech).', 'hatedetect'); ?>">
                                         <input
@@ -125,6 +132,24 @@
                                             ?>
                                         />
                                         <?php esc_html_e('Notify users in email about comment rejection (because of hate speech).', 'hatedetect'); ?>
+                                        <br>
+                                    </label>
+
+                                    <label for="hatedetect_show_comment_field_message"
+                                           title="<?php esc_attr_e('Notify users after submitting comment about rejection (because of hate speech).', 'hatedetect'); ?>">
+                                        <input
+                                                name="hatedetect_show_comment_field_message"
+                                                id="hatedetect_show_comment_field_message"
+                                                value="1"
+                                                type="checkbox"
+                                            <?php
+
+                                            // If the option isn't set, or if it's enabled ('1'), or if it was enabled a long time ago ('true'), check the checkbox.
+                                            checked(true, (in_array(get_option('hatedetect_show_comment_field_message'), array(false, '1', 'true'), true)));
+
+                                            ?>
+                                        />
+                                        <?php esc_html_e('Notify users after submitting comment about rejection (because of hate speech).', 'hatedetect'); ?>
                                         <br>
                                     </label>
                                 </p>

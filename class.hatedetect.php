@@ -183,9 +183,10 @@ class HateDetect
                         if (self::notify_user()) {
                             $hate_explanation = self::check_why_hate($id, $comment);
                             $mail_message = "The owner of " . strval(get_the_permalink($comment->comment_post_ID)) . " would like to inform you that your comment was blocked due to hate detection. \n You have tired to send the following comment content: \n" . strval($comment->comment_content) . "\n to the post: \n" . strval(get_post_permalink($comment->comment_post_ID));
-                            if (is_string($hate_explanation)) {
+                            if ( $hate_explanation ) {
                                 $mail_message = $mail_message . "\n Reason: " . $hate_explanation;
                             }
+                            self::log('Hate explanation: '.$hate_explanation.'   comment id: '.$id);
                             $headers = array('Content-Type: text/html; charset=UTF-8');
                             wp_mail(strval($comment->comment_author_email), "Comment rejected", $mail_message, $headers);
                         }
