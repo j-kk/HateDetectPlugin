@@ -555,6 +555,9 @@ class HateDetect_Admin
         if (get_option('hatedetect_lang') === false) {
             add_option('hatedetect_lang', 'en');
         }
+        if (get_option('hatedetect_show_comment_field_message') === false) {
+            add_option('hatedetect_show_comment_field_message', '1');
+        }
 
         HateDetect::view('config', compact('api_key'));
     }
