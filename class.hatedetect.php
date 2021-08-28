@@ -64,7 +64,7 @@ class HateDetect
             if ($comment_meta['hatedetect_result'][0] == 1) {
                 if ($comment->comment_approved == 1) {
                     return $comment_text;
-                } else if (get_option('hatedetect_show_comment_field_message', 'show') === 'show') {
+                } else if (get_option('hatedetect_show_comment_field_message', '0') === '1' && !current_user_can('manage_options')) {
                     $message = "Your comment was marked as a hateful by HateDetect plugin.";
                     echo "<em> " . $message . "</em>";
 
