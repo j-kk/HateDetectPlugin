@@ -41,6 +41,7 @@ class HateDetect
             add_action('wp_insert_comment', array('HateDetect', 'check_comment'), 10, 2);
             add_action('comment_form_after', array('HateDetect', 'display_comment_form_privacy_notice'));
             add_filter('comment_text', array('HateDetect', 'display_after_posting_comment'), 10, 2);
+            add_action('edit_comment', array('HateDetect', 'check_edited_comment'), 10, 2);
 
             add_action('hatedetect_schedule_cron_recheck', array('HateDetect', 'cron_recheck'));
             $timestamp = wp_next_scheduled('hatedetect_schedule_cron_recheck', array('cron'));
@@ -53,7 +54,7 @@ class HateDetect
     }
 
 
-    public static function display_after_posting_comment(string $comment_text, $comment)
+    public static function display_after_posting_comment(string $comment_text, $comment): string
     {
         if (is_null($comment)) {
             return $comment_text;
@@ -115,13 +116,13 @@ class HateDetect
             return $comment;
         }
 
+        $lang = get_option('hatedetect_lang');
         $request_args = array(
-            'comment_content' => $comment->comment_content,
-            'comment_id' => $comment->comment_ID,
-            'comment_author' => $comment->comment_author
+            'text' => $comment->comment_content,
+            'language' =>$lang,
         );
 
-        $response = self::http_post($request_args, 'ishate');
+        $response = self::http_post($request_args, 'predict');
 
         self::check_ishate_response($id, $comment, $response);
     }
@@ -167,9 +168,9 @@ class HateDetect
     {
 
         if (is_array($response[1])) {
-            if (array_key_exists('ishate', $response[1])) {
-                $ishate = $response[1]['ishate'];
-                self::log('Comment_id: ' . $id . " other_id: " . $comment->comment_ID . "  ishate: " . $ishate . PHP_EOL);
+            if (array_key_exists('prediction', $response[1])) {
+                $ishate = $response[1]['prediction'];
+                self::log('Comment_id: ' . $id . " other_id: " . $comment->comment_ID . "  prediction: " . $ishate . PHP_EOL);
                 if (is_bool($ishate)) {
                     if ($ishate) {
                         update_comment_meta($comment->comment_ID, 'hatedetect_result', 1);
@@ -183,10 +184,10 @@ class HateDetect
                         if (self::notify_user()) {
                             $hate_explanation = self::check_why_hate($id, $comment);
                             $mail_message = "The owner of " . strval(get_the_permalink($comment->comment_post_ID)) . " would like to inform you that your comment was blocked due to hate detection. \n You have tired to send the following comment content: \n" . strval($comment->comment_content) . "\n to the post: \n" . strval(get_post_permalink($comment->comment_post_ID));
-                            if ( $hate_explanation ) {
+                            if ($hate_explanation) {
                                 $mail_message = $mail_message . "\n Reason: " . $hate_explanation;
                             }
-                            self::log('Hate explanation: '.$hate_explanation.'   comment id: '.$id);
+                            self::log('Hate explanation: ' . $hate_explanation . '   comment id: ' . $id);
                             $headers = array('Content-Type: text/html; charset=UTF-8');
                             wp_mail(strval($comment->comment_author_email), "Comment rejected", $mail_message, $headers);
                         }
@@ -199,7 +200,7 @@ class HateDetect
                         return true;
                     }
                 } else {
-                    self::log('Comment_id: ' . $id . " other_id: " . $comment->comment_ID . " IsHate is not a bool");
+                    self::log('Comment_id: ' . $id . " other_id: " . $comment->comment_ID . " Prediction is not a bool");
                     update_comment_meta($comment->comment_ID, 'hatedetect_error', 1);
                     wp_set_comment_status($comment->comment_ID, 'hold');
                 }
@@ -229,13 +230,13 @@ class HateDetect
         if (!$retrieved_comment) {
             return new WP_Error('invalid-comment-id', __('Comment not found.', 'hatedetect'));
         }
+        $lang = get_option('hatedetect_lang');
         $request_args = array(
-            'comment_content' => $retrieved_comment->comment_content,
-            'comment_id' => $retrieved_comment->comment_ID,
-            'comment_author' => $retrieved_comment->comment_author
+            'text' => $retrieved_comment->comment_content,
+            'language' =>$lang,
         );
 
-        $response = self::http_post($request_args, 'ishate');
+        $response = self::http_post($request_args, 'predict');
 
         $response_success = self::check_ishate_response($id, $retrieved_comment, $response);
         if ($response_success) {
@@ -244,6 +245,11 @@ class HateDetect
         return $response_success;
     }
 
+
+    public static function check_edited_comment( int $comment_ID, array $data){
+        HateDetect::log("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEee");
+        HateDetect::check_db_comment($comment_ID);
+    }
 
     public static function cron_recheck(string $reason = 'unknown')
     {

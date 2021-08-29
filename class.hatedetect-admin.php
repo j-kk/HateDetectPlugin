@@ -703,7 +703,7 @@ class HateDetect_Admin
             $id = $_REQUEST['c'];
             HateDetect::check_comment($id, get_comment($id));
             wp_redirect(admin_url($_REQUEST['refer']));
-        } else wp_redirect(home_url());
+        } else wp_redirect(admin_url($_REQUEST['refer']));
         exit;
     }
 
@@ -713,7 +713,7 @@ class HateDetect_Admin
             $id = $_REQUEST['c'];
             HateDetect::check_why_hate($id, get_comment($id));
             wp_redirect(admin_url($_REQUEST['refer']));
-        } else wp_redirect(home_url());
+        } else wp_redirect(admin_url($_REQUEST['refer']));
         exit;
     }
 
