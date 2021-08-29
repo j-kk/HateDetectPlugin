@@ -215,15 +215,15 @@
                     <ul>
                         <li>
                             <h3><?php esc_html_e( 'Comments approved' , 'hatedetect');?></h3>
-                            <span><?php echo number_format(HateDetect::get_user_comments_approved() );?></span>
+                            <span><?php echo number_format(HateDetect_Admin::get_user_comments_approved() );?></span>
                         </li>
                         <li>
                             <h3><?php esc_html_e( 'Comments rejected' , 'hatedetect');?></h3>
-                            <span><?php echo number_format( HateDetect::get_user_comments_rejected() );?></span>
+                            <span><?php echo number_format( HateDetect_Admin::get_user_comments_rejected() );?></span>
                         </li>
                         <li>
                             <h3><?php esc_html_e( 'Comments queued' , 'hatedetect');?></h3>
-                            <span><?php echo number_format( HateDetect::get_user_comments_queued() ); ?></span>
+                            <span><?php echo number_format( HateDetect_Admin::get_user_comments_queued() ); ?></span>
                             </li>
                     </ul>
             </div>

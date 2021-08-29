@@ -137,6 +137,18 @@ class HateDetect_Admin
         )))) {
             wp_register_style('hatedetect.css', plugin_dir_url(__FILE__) . '_inc/hatedetect.css', array(), HATEDETECT_VERSION);
             wp_enqueue_style('hatedetect.css');
+
+            wp_register_script( 'hatedetect.js', plugin_dir_url( __FILE__ ) . '_inc/hatedetect.js', array('jquery'), HATEDETECT_VERSION );
+            wp_enqueue_script( 'hatedetect.js' );
+
+            $inline_js = array(
+            );
+
+            if ( isset( $_GET['hatedetect_recheck'] ) && wp_verify_nonce( $_GET['hatedetect_recheck'], 'hatedetect_recheck' ) ) {
+                $inline_js['start_recheck'] = true;
+            }
+
+            wp_localize_script( 'hatedetect.js', 'WPHateDetect', $inline_js );
         }
     }
 
@@ -324,7 +336,7 @@ class HateDetect_Admin
     public static function recheck_queue()
     {
         global $wpdb;
-
+        # TODO verify if
         if (!(isset($_GET['recheckqueue']) || (isset($_REQUEST['action']) && 'hatedetect_recheck_queue' == $_REQUEST['action']))) {
             return;
         }
@@ -355,8 +367,6 @@ class HateDetect_Admin
     {
         global $wpdb;
 
-        $paginate = '';
-
         if ($limit <= 0) {
             $limit = 100;
         }
@@ -365,22 +375,20 @@ class HateDetect_Admin
             $start = 0;
         }
 
-        $moderation = $wpdb->get_col($wpdb->prepare("SELECT * FROM {$wpdb->comments} WHERE comment_approved = '0' LIMIT %d OFFSET %d", $limit, $start));
+        $moderation = $wpdb->get_col($wpdb->prepare("SELECT * FROM {$wpdb->comments} WHERE comment_approved = 0 AND comment_ID not in (SELECT comment_id FROM {$wpdb->commentmeta} WHERE meta_key = 'hatedetect_result') LIMIT %d OFFSET %d", $limit, $start));
 
         $result_counts = array(
             'processed' => count($moderation),
             'hate' => 0,
-            'ham' => 0,
             'error' => 0,
         );
 
         foreach ($moderation as $comment_id) {
-            $api_response = HateDetect::recheck_comment($comment_id, 'recheck_queue');
+            $api_response = HateDetect::check_db_comment($comment_id);
 
-            if ('true' === $api_response) {
-                ++$result_counts['hate'];
-            } elseif ('false' === $api_response) {
-                ++$result_counts['ham'];
+            if ( $api_response) {
+                if (get_comment_meta($comment_id, 'hatedetect_result', true) === '1')
+                    ++$result_counts['hate'];
             } else {
                 ++$result_counts['error'];
             }
@@ -389,13 +397,11 @@ class HateDetect_Admin
         return $result_counts;
     }
 
-    # TODO
     public static function comment_row_action($a, WP_Comment $comment)
     {
         $hatedetect_result = get_comment_meta($comment->comment_ID, 'hatedetect_result', true);
         $hatedetect_error = get_comment_meta($comment->comment_ID, 'hatedetect_error', true);
         $hatedetect_explanation = get_comment_meta($comment->comment_ID, 'hatedetect_explanation', true);
-        $comment_status = wp_get_comment_status($comment->comment_ID);
         $desc = null;
         $desc_on_hover = null;
         HateDetect::log('Comment row action, id: ' . $comment->comment_ID . ' result:' . $hatedetect_result . " error: " . $hatedetect_error);
@@ -479,7 +485,7 @@ class HateDetect_Admin
         return add_query_arg($args, admin_url('options-general.php'));
     }
 
-    public static function display_alert()
+    public static function display_alert() # TODO
     {
         HateDetect::view('notice', array(
             'type' => 'alert',
@@ -488,20 +494,16 @@ class HateDetect_Admin
         ));
     }
 
-    public static function display_api_key_warning()
+    public static function display_api_key_warning() # TODO
     {
         HateDetect::view('notice', array('type' => 'plugin'));
     }
 
     public static function display_page()
     {
-        HateDetect::log('display page');
         if (!HateDetect::get_api_key() || (isset($_GET['view']) && $_GET['view'] == 'start')) {
-
-            HateDetect::log('start?');
             self::display_start_page();
         } else {
-            HateDetect::log('config');
             self::display_configuration_page();
         }
     }
@@ -718,4 +720,21 @@ class HateDetect_Admin
     }
 
 
+    public static function get_user_comments_approved()
+    {
+        global $wpdb;
+        return (int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->commentmeta} WHERE meta_key='hatedetect_result' AND meta_value=1");
+    }
+
+    public static function get_user_comments_rejected()
+    {
+        global $wpdb;
+        return (int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->commentmeta} WHERE meta_key='hatedetect_result' AND meta_value=0");
+    }
+
+    public static function get_user_comments_queued()
+    {
+        global $wpdb;
+        return (int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->commentmeta} WHERE meta_key = 'hatedetect_error'");
+    }
 }
