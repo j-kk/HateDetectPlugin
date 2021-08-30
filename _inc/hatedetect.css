@@ -130,6 +130,7 @@ table.comments td.comment p a:after {
 	font-size: 14px;
     margin: 0 0;
 	font-style: normal;
+	padding-left: 10pt;
 }
 
 .hatedetect-alert p.hatedetect-description a,
