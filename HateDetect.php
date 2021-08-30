@@ -6,7 +6,7 @@
 
 /*
 Plugin Name: HateDetect
-Plugin URI: http://URI_Of_Page_Describing_Plugin_and_Updates
+Plugin URI:
 Description: A brief description of the Plugin.
 Version: 1.0
 Author: jakubkowalski
@@ -22,13 +22,19 @@ if ( !function_exists( 'add_action' ) ) {
     exit;
 }
 
-define( 'HATEDETECT__PLUGIN_DIR', plugin_dir_path(__FILE__));
 define( 'HATEDETECT_VERSION', '0.0.1' );
+define( 'HATEDETECT__PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 register_activation_hook( __FILE__, array( 'HateDetect', 'plugin_activation' ) );
 register_deactivation_hook( __FILE__, array( 'HateDetect', 'plugin_deactivation' ) );
 
+require_once (HATEDETECT__PLUGIN_DIR . 'class.hatedetect.php');
+
 add_action( 'init', array( 'HateDetect', 'init' ) );
 
 
-require_once (HATEDETECT__PLUGIN_DIR . 'class.hatedetect.php');
+if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+    require_once( HATEDETECT__PLUGIN_DIR . 'class.hatedetect-admin.php' );
+    add_action( 'init', array( 'HateDetect_Admin', 'init' ) );
+}
+

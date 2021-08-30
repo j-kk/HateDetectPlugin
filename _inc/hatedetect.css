@@ -1,0 +1,654 @@
+.wp-admin.settings_page_hatedetect-key-config {
+	background-color:#f3f6f8;
+}
+
+#submitted-on {
+    position: relative;
+}
+#the-comment-list .author .hatedetect-user-comment-count {
+    display: inline;
+}
+#the-comment-list .author a span {
+    text-decoration: none;
+    color: #999;
+}
+#the-comment-list .author a span.hatedetect-span-link {
+	text-decoration: inherit;
+	color: inherit;
+}
+#the-comment-list .hatedetect_remove_url {
+    margin-left: 3px;
+    color: #999;
+    padding: 2px 3px 2px 0;
+}
+#the-comment-list .hatedetect_remove_url:hover {
+    color: #A7301F;
+    font-weight: bold;
+    padding: 2px 2px 2px 0;
+}
+#dashboard_recent_comments .hatedetect-status {
+    display: none;
+}
+.hatedetect-status {
+    float: right;
+}
+.hatedetect-status a {
+    color: #AAA;
+    font-style: italic;
+}
+table.comments td.comment p a {
+    text-decoration: underline;
+}
+table.comments td.comment p a:after {
+    content: attr(href);
+    color: #aaa;
+    display: inline-block; /* Show the URL without the link's underline extending under it. */
+    padding: 0 1ex; /* Because it's inline block, we can't just use spaces in the content: attribute to separate it from the link text. */
+}
+.mshot-arrow {
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 10px solid #5C5C5C;
+    position: absolute;
+    left: -6px;
+    top: 91px;
+}
+.mshot-container {
+    background: #5C5C5C;
+    position: absolute;
+    top: -94px;
+    padding: 7px;
+    width: 450px;
+    height: 338px;
+    z-index: 20000;
+    -moz-border-radius: 6px;
+    border-radius: 6px;
+    -webkit-border-radius: 6px;
+}
+.hatedetect-mshot {
+    position: absolute;
+    z-index: 100;
+}
+.hatedetect-mshot .mshot-image {
+    margin: 0;
+    height: 338px;
+    width: 450px;
+}
+.checkforhate {
+    display: inline-block !important;
+}
+
+.checkforhate-spinner {
+    display: inline-block;
+    margin-top: 7px;
+}
+
+.hatedetect-right {
+	float: right;
+}
+
+.hatedetect-card .hatedetect-right {
+	margin: 1em 0;
+}
+
+.hatedetect-alert-text {
+	color: #dd3d36;
+	font-weight: bold;
+	font-size: 120%;
+	margin-top: .5rem;
+}
+.hatedetect-alert {
+	border: 1px solid #e5e5e5;
+	padding: 0.4em 1em 1.4em 1em;
+    border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.hatedetect-alert h3.hatedetect-key-status {
+	color: #fff;
+	margin: 1em 0 0.5em 0;
+}
+
+.hatedetect-alert.hatedetect-critical {
+	background-color: #993300;
+}
+
+.hatedetect-alert.hatedetect-active {
+	background-color: #649316;
+}
+
+.hatedetect-alert p.hatedetect-key-status {
+	font-size: 24px;
+}
+
+.hatedetect-alert p.hatedetect-description {
+	color:#fff;
+	font-size: 14px;
+    margin: 0 0;
+	font-style: normal;
+	padding-left: 10pt;
+}
+
+.hatedetect-alert p.hatedetect-description a,
+.hatedetect-alert p.hatedetect-description a,
+.hatedetect-alert p.hatedetect-description a,
+.hatedetect-alert p.hatedetect-description a {
+	color: #fff;
+}
+
+.hatedetect-new-snapshot {
+	margin-top: 1em;
+	padding: 1em;
+	text-align: center;
+	background: #fff;
+}
+
+.hatedetect-new-snapshot h3 {
+    background: #f5f5f5;
+	color: #888;
+	font-size: 11px;
+    margin: 0;
+    padding: 3px;
+}
+
+.new-snapspot ul {
+	font-size: 12px;
+	width: 100%;
+}
+
+.hatedetect-new-snapshot ul li {
+    color: #999;
+	float: left;
+    font-size: 11px;
+	padding: 0 20px;
+    text-transform: uppercase;
+	width: 33%;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	-ms-box-sizing: border-box;
+}
+
+.hatedetect-new-snapshot ul li:first-child,
+.hatedetect-new-snapshot ul li:nth-child(2) {
+	border-right:1px dotted #ccc;
+}
+
+.hatedetect-new-snapshot ul li span {
+    color: #52accc;
+	display: block;
+	font-size: 32px;
+	font-weight: lighter;
+	line-height: 1.5em;
+}
+
+.hatedetect-settings th:first-child {
+	vertical-align: top;
+	padding-top: 15px;
+}
+
+.hatedetect-settings th.hatedetect-api-key {
+	vertical-align: middle;
+	padding-top: 0;
+}
+
+.hatedetect-settings input[type=text] {
+	width: 75%;
+}
+
+.hatedetect-settings span.hatedetect-note{
+	float: left;
+	padding-left: 23px;
+	font-size: 75%;
+	margin-top: -10px;
+}
+
+/**
+ * For the activation notice on the plugins page.
+ */
+
+#hatedetect_setup_prompt {
+	background: none;
+	border: none;
+	margin: 0;
+	padding: 0;
+	width: 100%;
+}
+
+.hatedetect_activate {
+	border: 1px solid #4F800D;
+	padding: 5px;
+	margin: 15px 0;
+	background: #83AF24;
+	background-image: -webkit-gradient(linear, 0% 0, 80% 100%, from(#83AF24), to(#4F800D));
+	background-image: -moz-linear-gradient(80% 100% 120deg, #4F800D, #83AF24);
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+	-webkit-border-radius: 3px;
+	position: relative;
+	overflow: hidden;
+}
+
+.hatedetect_activate .aa_a {
+	position: absolute;
+	top: -5px;
+	right: 10px;
+	font-size: 140px;
+	color: #769F33;
+	font-family: Georgia, "Times New Roman", Times, serif;
+}
+
+.hatedetect_activate .aa_button {
+	font-weight: bold;
+	border: 1px solid #029DD6;
+	border-top: 1px solid #06B9FD;
+	font-size: 15px;
+	text-align: center;
+	padding: 9px 0 8px 0;
+	color: #FFF;
+	background: #029DD6;
+	background-image: -webkit-gradient(linear, 0% 0, 0% 100%, from(#029DD6), to(#0079B1));
+	background-image: -moz-linear-gradient(0% 100% 90deg, #0079B1, #029DD6);
+	-moz-border-radius: 2px;
+	border-radius: 2px;
+	-webkit-border-radius: 2px;
+	width: 100%;
+	cursor: pointer;
+	margin: 0;
+}
+
+.hatedetect_activate .aa_button:hover {
+	text-decoration: none !important;
+	border: 1px solid #029DD6;
+	border-bottom: 1px solid #00A8EF;
+	font-size: 15px;
+	text-align: center;
+	padding: 9px 0 8px 0;
+	color: #F0F8FB;
+	background: #0079B1;
+	background-image: -webkit-gradient(linear, 0% 0, 0% 100%, from(#0079B1), to(#0092BF));
+	background-image: -moz-linear-gradient(0% 100% 90deg, #0092BF, #0079B1);
+	-moz-border-radius: 2px;
+	border-radius: 2px;
+	-webkit-border-radius: 2px;
+}
+
+.hatedetect_activate .aa_button_border {
+	border: 1px solid #006699;
+	-moz-border-radius: 2px;
+	border-radius: 2px;
+	-webkit-border-radius: 2px;
+	background: #029DD6;
+	background-image: -webkit-gradient(linear, 0% 0, 0% 100%, from(#029DD6), to(#0079B1));
+	background-image: -moz-linear-gradient(0% 100% 90deg, #0079B1, #029DD6);
+}
+
+.hatedetect_activate .aa_button_container {
+	box-sizing: border-box;
+	display: inline-block;
+	background: #DEF1B8;
+	padding: 5px;
+	-moz-border-radius: 2px;
+	border-radius: 2px;
+	-webkit-border-radius: 2px;
+	width: 266px;
+}
+
+.hatedetect_activate .aa_description {
+	position: absolute;
+	top: 22px;
+	left: 285px;
+	margin-left: 25px;
+	color: #E5F2B1;
+	font-size: 15px;
+}
+
+.hatedetect_activate .aa_description strong {
+	color: #FFF;
+	font-weight: normal;
+}
+
+@media (max-width: 550px) {
+	.hatedetect_activate .aa_a {
+		display: none;
+	}
+	
+	.hatedetect_activate .aa_button_container {
+		width: 100%;
+	}
+}
+
+@media (max-width: 782px) {
+	.hatedetect_activate {
+		min-width: 0;
+	}
+}
+
+@media (max-width: 850px) {
+	#hatedetect_setup_prompt .aa_description {
+		display: none;
+	}
+	
+	.hatedetect_activate {
+		min-width: 0;
+	}
+}
+
+.settings_page_hatedetect-key-config #wpcontent {
+	padding-left: 0;
+}
+
+.hatedetect-masthead {
+	background-color:#fff;
+	text-align:center;
+	box-shadow:0 1px 0 rgba(200,215,225,0.5),0 1px 2px #e9eff3
+}
+@media (max-width: 45rem) {
+	.hatedetect-masthead {
+		padding:0 1.25rem
+	}
+}
+
+.hatedetect-masthead__inside-container {
+	padding:.375rem 0;
+	margin:0 auto;
+	width:100%;
+	max-width:45rem;
+	text-align: left;
+}
+.hatedetect-masthead__logo-container {
+	padding:.3125rem 0 0
+}
+.hatedetect-masthead__logo {
+	width:10.375rem;
+	height:1.8125rem;
+}
+.hatedetect-masthead__logo-link {
+	display:inline-block;
+	outline:none;
+	vertical-align:middle
+}
+.hatedetect-masthead__logo-link:focus {
+	line-height:0;
+	box-shadow:0 0 0 2px #78dcfa
+}
+.hatedetect-masthead__logo-link+code {
+	margin:0 10px;
+	padding:5px 9px;
+	border-radius:2px;
+	background:#e6ecf1;
+	color:#647a88
+}
+.hatedetect-masthead__links {
+	display:-ms-flexbox;
+	display:flex;
+	-ms-flex-flow:row wrap;
+	flex-flow:row wrap;
+	-ms-flex:2 50%;
+	flex:2 50%;
+	-ms-flex-pack:end;
+	justify-content:flex-end;
+	margin:0
+}
+@media (max-width: 480px) {
+	.hatedetect-masthead__links {
+		padding-right:.625rem
+	}
+}
+.hatedetect-masthead__link-li {
+	margin:0;
+	padding:0
+}
+.hatedetect-masthead__link {
+	font-style:normal;
+	color:#0087be;
+	padding:.625rem;
+	display:inline-block
+}
+.hatedetect-masthead__link:visited {
+	color:#0087be
+}
+.hatedetect-masthead__link:active,.hatedetect-masthead__link:hover {
+	color:#00aadc
+}
+.hatedetect-masthead__link:hover {
+	text-decoration:underline
+}
+.hatedetect-masthead__link .dashicons {
+	display:none
+}
+@media (max-width: 480px) {
+	.hatedetect-masthead__link:hover,.hatedetect-masthead__link:active {
+		text-decoration:none
+	}
+	.hatedetect-masthead__link .dashicons {
+		display:block;
+		font-size:1.75rem
+	}
+	.hatedetect-masthead__link span+span {
+		display:none
+	}
+}
+.hatedetect-masthead__link-li:last-of-type .hatedetect-masthead__link {
+	padding-right:0
+}
+
+.hatedetect-lower {
+	margin: 0 auto;
+	text-align: left;
+	max-width: 45rem;
+	padding: 1.5rem;
+}
+
+.hatedetect-lower .notice {
+	margin-bottom: 2rem;
+}
+
+.hatedetect-card {
+	margin-top: 1rem;
+	margin-bottom: 0;
+	position: relative;
+	margin: 0 auto 0.625rem auto;
+	box-sizing: border-box;
+	background: white;
+	box-shadow: 0 0 0 1px rgba(200, 215, 225, 0.5), 0 1px 2px #e9eff3;
+}
+
+.hatedetect-card:after, .hatedetect-card .inside:after, .hatedetect-masthead__logo-container:after {
+	content: ".";
+	display: block;
+	height: 0;
+	clear: both;
+	visibility: hidden;
+}
+
+.hatedetect-card .inside {
+	padding: 1.5rem;
+	padding-top: 1rem;
+}
+
+.hatedetect-card .hatedetect-card-actions {
+	margin-top: 1rem;
+}
+
+.settings_page_hatedetect-key-config .update-nag {
+    display: none;
+}
+
+.hatedetect-masthead .hatedetect-right {
+	line-height: 2.125rem;
+	font-size: 0.9rem;
+}
+
+.hatedetect-box {
+	box-sizing: border-box;
+	background: white;
+	border: 1px solid rgba(200, 215, 225, 0.5);
+}
+
+.hatedetect-box h2, .hatedetect-box h3 {
+	padding: 1.5rem 1.5rem .5rem 1.5rem;
+	margin: 0;
+}
+
+.hatedetect-box p {
+	padding: 0 1.5rem 1.5rem 1.5rem;
+	margin: 0;
+}
+	
+.hatedetect-box p:after {
+	content: ".";
+	display: block;
+	height: 0;
+	clear: both;
+	visibility: hidden;
+}
+
+.hatedetect-box .hatedetect-right {
+	padding-right: 1.5rem;
+}
+
+.hatedetect-boxes .hatedetect-box {
+	margin-bottom: 0;
+	padding: 0;
+	margin-top: -1px;
+}
+
+.hatedetect-boxes .hatedetect-box:last-child {
+	margin-bottom: 1.5rem;
+}
+
+.hatedetect-boxes .hatedetect-box:first-child {
+	margin-top: 1.5rem;
+}
+
+.hatedetect-box-header {
+	max-width: 700px;
+	margin: 0 auto 40px auto;
+	line-height: 1.5;
+}
+
+.hatedetect-box-header h2 {
+	margin: 1.5rem 10% 0;
+	font-size: 1.375rem;
+	font-weight: 700;
+	color: #000;
+}
+
+.hatedetect-box .centered {
+	text-align: center;
+}
+
+.hatedetect-enter-api-key-box {
+	margin: 1.5rem 0;
+}
+
+.hatedetect-box .enter-api-key {
+	margin-top: 1.5rem;
+}
+
+.hatedetect-box .hatedetect-toggles {
+	margin: 3rem 0;
+}
+
+.hatedetect-box .hatedetect-ak-connect, .hatedetect-box .toggle-jp-connect {
+	display: none;
+}
+
+.hatedetect-box .enter-api-key p {
+	padding: 0 1.5rem;
+}
+
+.hatedetect-button, .hatedetect-button:hover, .hatedetect-button:visited {
+	background: white;
+	border-color: #c8d7e1;
+	border-style: solid;
+	border-width: 1px 1px 2px;
+	color: #2e4453;
+	cursor: pointer;
+	display: inline-block;
+	margin: 0;
+	outline: 0;
+	overflow: hidden;
+	font-size: 14px;
+	font-weight: 500;
+	text-overflow: ellipsis;
+	text-decoration: none;
+	vertical-align: top;
+	box-sizing: border-box;
+	font-size: 14px;
+	line-height: 21px;
+	border-radius: 4px;
+	padding: 7px 14px 9px;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+}
+
+.hatedetect-button:hover {
+	border-color: #a8bece;
+}
+
+.hatedetect-button:active {
+	border-width: 2px 1px 1px;
+}
+
+.hatedetect-is-primary, .hatedetect-is-primary:hover, .hatedetect-is-primary:visited {
+	background: #00aadc;
+	border-color: #0087be;
+	color: white;
+}
+
+.hatedetect-is-primary:hover, .hatedetect-is-primary:focus {
+    border-color: #005082;
+}
+
+.hatedetect-is-primary:hover {
+	border-color: #005082;
+}
+
+.hatedetect-section-header {
+	position: relative;
+	margin: 0 auto 0.625rem auto;
+	padding: 1rem;
+	box-sizing: border-box;
+	box-shadow: 0 0 0 1px rgba(200, 215, 225, 0.5), 0 1px 2px #e9eff3;
+	background: #ffffff;
+	width: 100%;
+	padding-top: 0.6875rem;
+	padding-bottom: 0.6875rem;
+	display: flex;
+}
+
+.hatedetect-section-header__label {
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-align: center;
+	align-items: center;
+	-ms-flex-positive: 1;
+	flex-grow: 1;
+	line-height: 1.75rem;
+	position: relative;
+	font-size: 0.875rem;
+	color: #4f748e;
+}
+
+.hatedetect-section-header__actions {
+	line-height: 1.75rem;
+}
+
+.hatedetect-setup-instructions {
+	text-align: center;
+}
+
+.hatedetect-setup-instructions form {
+	padding-bottom: 1.5rem;
+}
+
+.hatedetect-key-status {
+	padding-left: 10pt;
+}
