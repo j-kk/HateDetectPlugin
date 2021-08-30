@@ -670,13 +670,11 @@ class HateDetect_Admin
     public static function modify_comments_list_row_actions($actions, WP_Comment $comment)
     {
         $nonce = wp_create_nonce('check_for_hate');
-        $screen = get_current_screen();
         $args = array(
             'c' => $comment->comment_ID,
             'action' => 'check_for_hate',
             'another_query' => '1',
             '_wpnonce' => $nonce,
-            'refer' => $screen->parent_file
         );
         $link = esc_url(add_query_arg($args, admin_url('admin-ajax.php')));
         $actions['hatedetect_check_hate'] = sprintf('<a href="%s" style="color:orange">Check for hate</a>', $link);
@@ -684,13 +682,11 @@ class HateDetect_Admin
 
         if (get_comment_meta($comment->comment_ID, 'hatedetect_result', true) === '1') {
             $nonce2 = wp_create_nonce('explain_hate');
-            $screen2 = get_current_screen();
             $args2 = array(
                 'c' => $comment->comment_ID,
                 'action' => 'explain_hate',
                 'another_query' => '1',
                 '_wpnonce' => $nonce2,
-                'refer' => $screen2->parent_file
             );
             $link2 = esc_url(add_query_arg($args2, admin_url('admin-ajax.php')));
             $actions['hatedetect_explain_hate'] = sprintf('<a href="%s" style="color:orange">Explain why hate</a>', $link2);
@@ -701,21 +697,23 @@ class HateDetect_Admin
 
     public static function admin_action_comment_check_for_hate()
     {
+        $refer = wp_get_referer();
         if (wp_verify_nonce($_REQUEST['_wpnonce'], 'check_for_hate')) {
             $id = $_REQUEST['c'];
             HateDetect::check_comment($id, get_comment($id));
-            wp_redirect(admin_url($_REQUEST['refer']));
-        } else wp_redirect(admin_url($_REQUEST['refer']));
+        }
+        wp_redirect($refer);
         exit;
     }
 
     public static function admin_action_comment_explain_hate()
     {
+        $refer = wp_get_referer();
         if (wp_verify_nonce($_REQUEST['_wpnonce'], 'explain_hate')) {
             $id = $_REQUEST['c'];
             HateDetect::check_why_hate($id, get_comment($id));
-            wp_redirect(admin_url($_REQUEST['refer']));
-        } else wp_redirect(admin_url($_REQUEST['refer']));
+        }
+        wp_redirect($refer);
         exit;
     }
 
