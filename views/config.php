@@ -2,9 +2,7 @@
     <div class="hatedetect-masthead">
         <div class="hatedetect-masthead__inside-container">
             <div class="hatedetect-masthead__logo-container">
-                <img class="hatedetect-masthead__logo"
-                     src="<?php echo esc_url(plugins_url('../_inc/img/logo-full-2x.png', __FILE__)); ?>"
-                     alt="HateDetect"/>
+                HateDetect
             </div>
         </div>
     </div>
@@ -118,7 +116,7 @@
                             <td align="left">
                                 <p>
                                     <label for="hatedetect_notify_user"
-                                           title="<?php esc_attr_e('Notify users in email about comment rejection (because of hate speech).', 'hatedetect'); ?>">
+                                           title="<?php esc_attr_e('Notify users in email about comment rejection (because of hate speech) (additional setup required, see help).', 'hatedetect'); ?>">
                                         <input
                                                 name="hatedetect_notify_user"
                                                 id="hatedetect_notify_user"

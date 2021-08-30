@@ -16,6 +16,9 @@ class HateDetect
     {
         HateDetect::log('HateDetect deactivated');
         delete_option('hatedetect_api_key');
+        delete_option('hatedetect_alert_code');
+        delete_option('hatedetect_alert_msg');
+        delete_option('hatedetect_key_status');
 
         // Remove any scheduled cron jobs.
         $timestamp = wp_next_scheduled('hatedetect_schedule_cron_recheck', array('cron'));
@@ -94,7 +97,7 @@ class HateDetect
         $lang = get_option('hatedetect_lang');
         $request_args = array(
             'text' => $comment->comment_content,
-            'language' =>$lang,
+            'language' => $lang,
         );
 
         $response = self::http_post($request_args, 'predict');
@@ -128,7 +131,7 @@ class HateDetect
         return $response_success;
     }
 
-    
+
     public static function check_why_hate(int $id, WP_Comment $comment)
     {
         HateDetect::log('Checking why hate: ' . strval($id) . ' comment: ' . $comment->comment_content . PHP_EOL);
@@ -189,7 +192,7 @@ class HateDetect
                             if ($hate_explanation) {
                                 $mail_message = $mail_message . "\n Reason: " . $hate_explanation;
                             }
-                            HateDetect::log('Hate explanation: '.$hate_explanation.'   comment id: '.$id);
+                            HateDetect::log('Hate explanation: ' . $hate_explanation . '   comment id: ' . $id);
                             $headers = array('Content-Type: text/html; charset=UTF-8');
                             wp_mail(strval($comment->comment_author_email), "Comment rejected", $mail_message, $headers);
                         }
@@ -197,6 +200,7 @@ class HateDetect
                         return true;
                     } else {
                         update_comment_meta($comment->comment_ID, 'hatedetect_result', 0);
+                        delete_comment_meta($comment->comment_ID, 'hatedetect_error');
                         if (self::auto_allow()) {
                             wp_set_comment_status($comment->comment_ID, 'approve');
                         }
@@ -226,10 +230,8 @@ class HateDetect
     }
 
 
-
-
-    public static function check_edited_comment( int $comment_ID, array $data){
-        HateDetect::log("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEee");
+    public static function check_edited_comment(int $comment_ID, array $data)
+    {
         HateDetect::check_db_comment($comment_ID);
     }
 
@@ -240,7 +242,7 @@ class HateDetect
         $api_key = self::get_api_key();
 
         $status = self::verify_key($api_key);
-        if (get_option('hatedetect_alert_code') || $status == 'invalid') {
+        if (get_option('hatedetect_alert_code') || $status !== 'OK') {
             // since there is currently a problem with the key, reschedule a check for 6 hours hence
             return false;
         }
@@ -374,6 +376,7 @@ class HateDetect
         if (is_wp_error($response)) {
             do_action('hatedetect_request_failure', $response);
 
+
             return array('', '');
         }
 
@@ -390,20 +393,16 @@ class HateDetect
         } else {
             $data = $body;
         }
+        $headers = $response['headers'];
+        if (isset($headers['x-hatedetect_alert_code'])) {
+            update_option('hatedetect_alert_code', $headers['x-hatedetect_alert_code']);
+            update_option('hatedetect_alert_msg', $headers['x-hatedetect_alert_msg']);
+            self::verify_key(self::get_api_key());
+        }
 
-        return array($response['headers'], $data);
+        return array($headers, $data);
     }
 
-
-    public static function check_key_status($key, $ip = null)
-    {
-        $request_args = array(
-            'api_key' => $key,
-            'blog' => get_option('home')
-        );
-
-        return self::http_post($request_args, 'verify-key');
-    }
 
     public static function manual_schedule_cron_recheck(int $delay = null)
     {
@@ -425,16 +424,33 @@ class HateDetect
         wp_schedule_single_event($time, 'hatedetect_schedule_cron_recheck', array('recheck'));
     }
 
-    public static function verify_key($key, $ip = null)
+    public static function verify_key($key)
     {
-        $response = self::check_key_status($key, $ip);
+        $request_args = array(
+            'api_key' => $key,
+            'blog' => get_option('home')
+        );
+
+        $response = self::http_post($request_args, 'verify-key');
 
         if (!empty($response[1])) {
             if (array_key_exists("api_key", $response[1]) && array_key_exists("status", $response[1])) {
                 if ($response[1]['status'] == "OK") {
+                    update_option('hatedetect_api_key', $key);
+                    update_option('hatedetect_key_status', "OK");
+                    delete_option('hatedetect_alert_code');
+                    delete_option('hatedetect_alert_msg');
                     return $response[1]['status'];
+                } else {
+                    update_option('hatedetect_key_status', $response[1]['status']);
                 }
+            } else {
+                update_option('hatedetect_key_status', "failed");
+                delete_option('hatedetect_api_key');
             }
+        } else {
+            update_option('hatedetect_key_status', "failed");
+            delete_option('hatedetect_api_key');
         }
         HateDetect::log("Failed to verify key: " . wp_json_encode($response));
         return 'failed';
@@ -466,7 +482,7 @@ class HateDetect
             $$key = $val;
         }
 
-        load_plugin_textdomain('akismet');
+        load_plugin_textdomain('hatedetect');
 
         $file = HATEDETECT__PLUGIN_DIR . 'views/' . $name . '.php';
 
@@ -492,7 +508,6 @@ class HateDetect
             ) . '</p>'
         );
     }
-
 
 
     public static function auto_allow()
