@@ -32,9 +32,9 @@ class HateDetect_Admin
             self::init_hooks();
         }
 
-        if (isset($_POST['action']) && $_POST['action'] == 'enter-key') {
-            self::enter_api_key();
-        }
+//        if (isset($_POST['action']) && $_POST['action'] == 'enter-key') {
+//            self::enter_api_key();
+//        }
     }
 
     public static function init_hooks()
@@ -69,7 +69,7 @@ class HateDetect_Admin
 
     public static function admin_init()
     {
-        if (get_option('Activated_HateDetect')) {
+        if (get_option('Activated_HateDetect')) { # TODO check
             delete_option('Activated_HateDetect');
             if (!headers_sent()) {
                 wp_redirect(add_query_arg(array(
@@ -160,7 +160,7 @@ class HateDetect_Admin
 
         // Screen Content
         if (current_user_can('manage_options')) {
-            if (!HateDetect::get_api_key() || (isset($_GET['view']) && $_GET['view'] == 'start')) {
+//            if (!HateDetect::get_api_key() || (isset($_GET['view']) && $_GET['view'] == 'start')) {
                 //setup page
                 $current_screen->add_help_tab(
                     array(
@@ -187,95 +187,95 @@ class HateDetect_Admin
                             '</ol>',
                     )
                 );
-            } else {
-                //configuration page
-                $current_screen->add_help_tab(
-                    array(
-                        'id' => 'overview',
-                        'title' => __('Overview', 'hatedetect'),
-                        'content' =>
-                            '<p><strong>' . esc_html__('HateDetect Configuration', 'hatedetect') . '</strong></p>' .
-                            '<p>' . esc_html__('HateDetect filters out hate.', 'hatedetect') . '</p>' .
-                            '<p>' . esc_html__('On this page, you are able to update your HateDetect settings.', 'hatedetect') . '</p>',
-                    )
-                );
-
-                $current_screen->add_help_tab(
-                    array(
-                        'id' => 'settings',
-                        'title' => __('Settings', 'hatedetect'),
-                        'content' =>
-                            '<p><strong>' . esc_html__('HateDetect Configuration', 'hatedetect') . '</strong></p>' .
-                            '<p><strong>' . esc_html__('API Key', 'hatedetect') . '</strong> - ' . esc_html__('Enter/remove an API key.', 'hatedetect') . '</p>' .
-                            '<p><strong>' . esc_html__('Auto allow', 'hatedetect') . '</strong> - ' . esc_html__('Should plugin auto allow all comments which does not contain hate. (skips moderation verification)', 'hatedetect') . '</p>' .
-                            '<p><strong>' . esc_html__('Notify after submitting', 'hatedetect') . '</strong> - ' . esc_html__('Show user after submitting comment if it was marked as hate speech.', 'hatedetect') . '</p>'.
-                            '<p><strong>' . esc_html__('Notify in email', 'hatedetect') . '</strong> - ' . esc_html__('Send an email to comment\'s author if her/his comment was rejected because of hate speech and why. Requires configured SMTP server (for example with WP Mail SMTP by WPForms plugin)', 'hatedetect') . '</p>',
-                        )
-                );
-
-            }
+//            } else {
+//                //configuration page
+//                $current_screen->add_help_tab(
+//                    array(
+//                        'id' => 'overview',
+//                        'title' => __('Overview', 'hatedetect'),
+//                        'content' =>
+//                            '<p><strong>' . esc_html__('HateDetect Configuration', 'hatedetect') . '</strong></p>' .
+//                            '<p>' . esc_html__('HateDetect filters out hate.', 'hatedetect') . '</p>' .
+//                            '<p>' . esc_html__('On this page, you are able to update your HateDetect settings.', 'hatedetect') . '</p>',
+//                    )
+//                );
+//
+//                $current_screen->add_help_tab(
+//                    array(
+//                        'id' => 'settings',
+//                        'title' => __('Settings', 'hatedetect'),
+//                        'content' =>
+//                            '<p><strong>' . esc_html__('HateDetect Configuration', 'hatedetect') . '</strong></p>' .
+//                            '<p><strong>' . esc_html__('API Key', 'hatedetect') . '</strong> - ' . esc_html__('Enter/remove an API key.', 'hatedetect') . '</p>' .
+//                            '<p><strong>' . esc_html__('Auto allow', 'hatedetect') . '</strong> - ' . esc_html__('Should plugin auto allow all comments which does not contain hate. (skips moderation verification)', 'hatedetect') . '</p>' .
+//                            '<p><strong>' . esc_html__('Notify after submitting', 'hatedetect') . '</strong> - ' . esc_html__('Show user after submitting comment if it was marked as hate speech.', 'hatedetect') . '</p>'.
+//                            '<p><strong>' . esc_html__('Notify in email', 'hatedetect') . '</strong> - ' . esc_html__('Send an email to comment\'s author if her/his comment was rejected because of hate speech and why. Requires configured SMTP server (for example with WP Mail SMTP by WPForms plugin)', 'hatedetect') . '</p>',
+//                        )
+//                );
+//
+//            }
         }
     }
 
-    public static function enter_api_key()
-    {
-        if (!current_user_can('manage_options')) {
-            die(__('Cheatin&#8217; uh?', 'hatedetect'));
-        }
-
-        if (!wp_verify_nonce($_POST['_wpnonce'], self::NONCE)) {
-            return false;
-        }
-
-        foreach (array('hatedetect_auto_allow',
-                     'hatedetect_auto_discard',
-                     'hatedetect_notify_user',
-                     'hatedetect_show_comment_field_message') as $option) {
-            update_option($option, isset($_POST[$option]) && (int)$_POST[$option] == 1 ? '1' : '0');
-            HateDetect::log("Updated option: " . $option);
-        }
-        if (isset($_POST['hatedetect_lang'])) {
-            if (array_key_exists($_POST['hatedetect_lang'], HateDetect_Admin::SUPPORTED_LANGS)) {
-                add_option('hatedetect_lang', $_POST['hatedetect_lang']);
-            }
-        }
-        if (!empty($_POST['hatedetect_comment_form_privacy_notice'])) {
-            self::set_form_privacy_notice_option($_POST['hatedetect_comment_form_privacy_notice']);
-        } else {
-            self::set_form_privacy_notice_option('hide');
-        }
-
-        $new_key = $_POST['key'];
-        $old_key = HateDetect::get_api_key();
-
-
-        if (empty($new_key)) {
-            if (!empty($old_key)) {
-                delete_option('hatedetect_api_key');
-                self::$notices[] = 'new-key-empty';
-            }
-        } elseif ($new_key != $old_key) {
-            self::check_key_status($new_key);
-        }
-
-        return true;
-    }
-
-    public static function check_key_status($api_key)
-    {
-        HateDetect::log("Verifying key: " . $api_key);
-        $key_status = HateDetect::verify_key($api_key);
-        update_option('hatedetect_key_status', $key_status);
-
-        if ($key_status == 'OK') {
-            self::$notices['status'] = 'new-key-valid';
-            HateDetect::manual_schedule_cron_recheck(15);
-            return true;
-        } else {
-            self::$notices['status'] = 'new-key-' . $key_status;
-            return false;
-        }
-    }
+//    public static function enter_api_key()
+//    {
+//        if (!current_user_can('manage_options')) {
+//            die(__('Cheatin&#8217; uh?', 'hatedetect'));
+//        }
+//
+//        if (!wp_verify_nonce($_POST['_wpnonce'], self::NONCE)) {
+//            return false;
+//        }
+//
+//        foreach (array('hatedetect_auto_allow',
+//                     'hatedetect_auto_discard',
+//                     'hatedetect_notify_user',
+//                     'hatedetect_show_comment_field_message') as $option) {
+//            update_option($option, isset($_POST[$option]) && (int)$_POST[$option] == 1 ? '1' : '0');
+//            HateDetect::log("Updated option: " . $option);
+//        }
+//        if (isset($_POST['hatedetect_lang'])) {
+//            if (array_key_exists($_POST['hatedetect_lang'], HateDetect_Admin::SUPPORTED_LANGS)) {
+//                add_option('hatedetect_lang', $_POST['hatedetect_lang']);
+//            }
+//        }
+//        if (!empty($_POST['hatedetect_comment_form_privacy_notice'])) {
+//            self::set_form_privacy_notice_option($_POST['hatedetect_comment_form_privacy_notice']);
+//        } else {
+//            self::set_form_privacy_notice_option('hide');
+//        }
+//
+//        $new_key = $_POST['key'];
+//        $old_key = HateDetect::get_api_key();
+//
+//
+//        if (empty($new_key)) {
+//            if (!empty($old_key)) {
+//                delete_option('hatedetect_api_key');
+//                self::$notices[] = 'new-key-empty';
+//            }
+//        } elseif ($new_key != $old_key) {
+//            self::check_key_status($new_key);
+//        }
+//
+//        return true;
+//    }
+//
+//    public static function check_key_status($api_key)
+//    {
+//        HateDetect::log("Verifying key: " . $api_key);
+//        $key_status = HateDetect::verify_key($api_key);
+//        update_option('hatedetect_key_status', $key_status);
+//
+//        if ($key_status == 'OK') {
+//            self::$notices['status'] = 'new-key-valid';
+//            HateDetect::manual_schedule_cron_recheck(15);
+//            return true;
+//        } else {
+//            self::$notices['status'] = 'new-key-' . $key_status;
+//            return false;
+//        }
+//    }
 
     public static function check_for_hate_button($comment_status)
     {
@@ -302,10 +302,10 @@ class HateDetect_Admin
         if ($comments_count->moderated > 0) {
             $classes[] = 'enable-on-load';
 
-            if (!HateDetect::get_api_key()) {
-                $link = add_query_arg(array('page' => 'hatedetect-key-config'), admin_url('options-general.php'));
-                $classes[] = 'ajax-disabled';
-            }
+//            if (!HateDetect::get_api_key()) {
+//                $link = add_query_arg(array('page' => 'hatedetect-key-config'), admin_url('options-general.php'));
+//                $classes[] = 'ajax-disabled';
+//            }
         }
 
         echo '<a
@@ -452,7 +452,7 @@ class HateDetect_Admin
         $debug['SITE_URL'] = site_url();
         $debug['HOME_URL'] = home_url();
 
-        $response = HateDetect::http_post(array(), 'test', null, false);
+        $response = HateDetect::http_post(array(), 'isalive', null, false);
 
         $debug['gethostbynamel'] = function_exists('gethostbynamel') ? 'exists' : 'not here';
         $debug['Test Connection'] = $response;
@@ -472,14 +472,14 @@ class HateDetect_Admin
 
         $args = array('page' => 'hatedetect-key-config');
 
-        if ($page == 'delete_key') {
-            $args = array(
-                'page' => 'hatedetect-key-config',
-                'view' => 'start',
-                'action' => 'delete-key',
-                '_wpnonce' => wp_create_nonce(self::NONCE)
-            );
-        }
+//        if ($page == 'delete_key') {
+//            $args = array(
+//                'page' => 'hatedetect-key-config',
+//                'view' => 'start',
+//                'action' => 'delete-key',
+//                '_wpnonce' => wp_create_nonce(self::NONCE)
+//            );
+//        }
 
         return add_query_arg($args, admin_url('options-general.php'));
     }
@@ -493,56 +493,56 @@ class HateDetect_Admin
         ));
     }
 
-    public static function display_api_key_warning()
-    {
-        HateDetect::view('notice', array('type' => 'plugin'));
-    }
+//    public static function display_api_key_warning()
+//    {
+//        HateDetect::view('notice', array('type' => 'plugin'));
+//    }
 
     public static function display_page()
     {
-        if (!HateDetect::get_api_key() || (isset($_GET['view']) && $_GET['view'] == 'start')) {
-            self::display_start_page();
-        } else {
+//        if (!HateDetect::get_api_key() || (isset($_GET['view']) && $_GET['view'] == 'start')) {
+//        self::display_start_page();
+//        } else {
             self::display_configuration_page();
-        }
+//        }
     }
 
     public static function display_start_page()
     {
-        if (isset($_GET['action'])) {
-            if ($_GET['action'] == 'delete-key') {
-                if (isset($_GET['_wpnonce']) && wp_verify_nonce($_GET['_wpnonce'], self::NONCE)) {
-                    delete_option('hatedetect_api_key');
-                }
-            }
-        }
+//        if (isset($_GET['action'])) {
+//            if ($_GET['action'] == 'delete-key') {
+//                if (isset($_GET['_wpnonce']) && wp_verify_nonce($_GET['_wpnonce'], self::NONCE)) {
+//                    delete_option('hatedetect_api_key');
+//                }
+//            }
+//        }
 
-        if ($api_key = HateDetect::get_api_key() && (empty(self::$notices['status']) || 'existing-key-invalid' != self::$notices['status'])) {
-            self::display_configuration_page();
+//        if ($api_key = HateDetect::get_api_key() && (empty(self::$notices['status']) || 'existing-key-invalid' != self::$notices['status'])) {
+//            self::display_configuration_page();
+//
+//            return;
+//        }
 
-            return;
-        }
-
-        if (isset($_GET['token'])) {
-            $api_key_status = HateDetect::verify_key($_GET['token']);
-        }
-        if (isset($_GET['action'])) {
-            if ($_GET['action'] == 'save-key') {
-                if ($api_key_status == 'OK') {
-                    self::check_key_status($_GET['token']);
+//        if (isset($_GET['token'])) {
+//            $api_key_status = HateDetect::verify_key($_GET['token']);
+//        }
+//        if (isset($_GET['action'])) {
+//            if ($_GET['action'] == 'save-key') {
+//                if ($api_key_status == 'OK') {
+//                    self::check_key_status($_GET['token']);
                     self::display_configuration_page();
-
-                    return;
-                }
-            }
-        }
+//
+//                    return;
+//                }
+//            }
+//        }
 
         HateDetect::view('start');
     }
 
     public static function display_configuration_page()
     {
-        $api_key = HateDetect::get_api_key();
+//        $api_key = HateDetect::get_api_key();
         // Set default setting values
         if (get_option('hatedetect_auto_discard') === false) {
             add_option('hatedetect_auto_discard', '0');
@@ -560,18 +560,19 @@ class HateDetect_Admin
             add_option('hatedetect_show_comment_field_message', '1');
         }
 
-        HateDetect::view('config', compact('api_key'));
+//	    HateDetect::view('config', compact('api_key'));
+	    HateDetect::view('config'); # TODO ssl
     }
 
-    public static function get_status()
-    {
-        if (get_option('hatedetect_key_status') === false) {
-            self::check_key_status(HateDetect::get_api_key());
-        } elseif (get_option('hatedetect_key_status') != 'OK') {
-            self::check_key_status(HateDetect::get_api_key());
-        }
-        return get_option('hatedetect_key_status');
-    }
+//    public static function get_status()
+//    {
+//        if (get_option('hatedetect_key_status') === false) {
+//            self::check_key_status(HateDetect::get_api_key());
+//        } elseif (get_option('hatedetect_key_status') != 'OK') {
+//            self::check_key_status(HateDetect::get_api_key());
+//        }
+//        return get_option('hatedetect_key_status');
+//    }
 
     public static function display_notice() # TODO
     {
@@ -584,16 +585,16 @@ class HateDetect_Admin
             return;
         }
 
-        if (in_array($hook_suffix, array('edit-comments.php')) && (int)get_option('hatedetect_alert_code') > 0) {
-            $key_status = HateDetect::verify_key(HateDetect::get_api_key()); //verify that the key is still in alert state
-
-            if (get_option('hatedetect_alert_code') > 0) {
-                self::display_alert();
-            }
-        } elseif (('plugins.php' === $hook_suffix || 'edit-comments.php' === $hook_suffix) && !HateDetect::get_api_key()) {
-            // Show the "Set Up HateDetect" banner on the comments and plugin pages if no API key has been set.
-            self::display_api_key_warning();
-        }
+//        if (in_array($hook_suffix, array('edit-comments.php')) && (int)get_option('hatedetect_alert_code') > 0) {
+//            $key_status = HateDetect::verify_key(HateDetect::get_api_key()); //verify that the key is still in alert state
+//
+//            if (get_option('hatedetect_alert_code') > 0) {
+//                self::display_alert();
+//            }
+//        } elseif (('plugins.php' === $hook_suffix || 'edit-comments.php' === $hook_suffix) && !HateDetect::get_api_key()) {
+//            // Show the "Set Up HateDetect" banner on the comments and plugin pages if no API key has been set.
+//            self::display_api_key_warning();
+//        }
 
         if (isset($_GET['hatedetect_recheck_complete'])) {
             $recheck_count = (int)$_GET['recheck_count'];
