@@ -337,11 +337,16 @@ class HateDetect_Admin {
 				} else {
 					$desc = __( 'Hate speech', 'hatedetect' );
 				}
-			} else {
+			} elseif ( $hatedetect_result === '0') {
 
 				$desc = __( 'OK', 'hatedetect' );
+			} else {
+				$desc = __( 'No hate check performed', 'hatedetect' );
+				$desc_on_hover = __('This comment was probably submitted before activating plugin.', 'hatedetect');
 			}
-			$desc_on_hover = $desc;
+			if (is_null($desc_on_hover)) {
+				$desc_on_hover = $desc;
+			}
 		}
 
 		HateDetect::log( 'Comment row action, id: ' . $comment->comment_ID . ' desc:' . $desc );
