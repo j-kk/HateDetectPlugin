@@ -142,7 +142,12 @@
                             <td></td>
                             <td><select name="hatedetect_lang">
                                     <?php foreach ( HateDetect_Admin::SUPPORTED_LANGS as $lang => $langFullName) { ?>
-                                      <?php  echo "<option value='$lang'>" . $langFullName . "</option>"; ?>
+                                      <?php if (get_option('hatedetect_lang') === $lang ) {
+                                          echo "<option value='$lang' selected='selected'>" . $langFullName . "</option>";
+                                      } else {
+		                                    echo "<option value='$lang'>" . $langFullName . "</option>";
+	                                    }
+                                        ?>
                                     <?php } ?>
                                 </select>
                             </td>
