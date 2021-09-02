@@ -32,9 +32,9 @@ class HateDetect_Admin
             self::init_hooks();
         }
 
-//        if (isset($_POST['action']) && $_POST['action'] == 'enter-key') {
-//            self::enter_api_key();
-//        }
+        if (isset($_POST['action']) && $_POST['action'] == 'enter-options') {
+            self::enter_options();
+        }
     }
 
     public static function init_hooks()
@@ -160,122 +160,65 @@ class HateDetect_Admin
 
         // Screen Content
         if (current_user_can('manage_options')) {
-//            if (!HateDetect::get_api_key() || (isset($_GET['view']) && $_GET['view'] == 'start')) {
-                //setup page
-                $current_screen->add_help_tab(
-                    array(
-                        'id' => 'overview',
-                        'title' => __('Overview', 'hatedetect'),
-                        'content' =>
-                            '<p><strong>' . esc_html__('HateDetect Setup', 'hatedetect') . '</strong></p>' .
-                            '<p>' . esc_html__('HateDetect filters out hate.', 'hatedetect') . '</p>' .
-                            '<p>' . esc_html__('On this page, you are able to set up the HateDetect plugin.', 'hatedetect') . '</p>',
-                    )
-                );
+            //setup page
+            $current_screen->add_help_tab(
+                array(
+                    'id' => 'overview',
+                    'title' => __('Overview', 'hatedetect'),
+                    'content' =>
+                        '<p><strong>' . esc_html__('HateDetect Setup', 'hatedetect') . '</strong></p>' .
+                        '<p>' . esc_html__('HateDetect filters out hate.', 'hatedetect') . '</p>' .
+                        '<p>' . esc_html__('On this page, you are able to set up the HateDetect plugin.', 'hatedetect') . '</p>',
+                )
+            );
 
 
-                $current_screen->add_help_tab(
-                    array(
-                        'id' => 'setup-manual',
-                        'title' => __('Enter an API Key', 'hatedetect'),
-                        'content' =>
-                            '<p><strong>' . esc_html__('HateDetect Setup', 'hatedetect') . '</strong></p>' .
-                            '<p>' . esc_html__('If you already have an API key', 'hatedetect') . '</p>' .
-                            '<ol>' .
-                            '<li>' . esc_html__('Copy and paste the API key into the text field.', 'hatedetect') . '</li>' .
-                            '<li>' . esc_html__('Click the Use this Key button.', 'hatedetect') . '</li>' .
-                            '</ol>',
-                    )
-                );
-//            } else {
-//                //configuration page
-//                $current_screen->add_help_tab(
-//                    array(
-//                        'id' => 'overview',
-//                        'title' => __('Overview', 'hatedetect'),
-//                        'content' =>
-//                            '<p><strong>' . esc_html__('HateDetect Configuration', 'hatedetect') . '</strong></p>' .
-//                            '<p>' . esc_html__('HateDetect filters out hate.', 'hatedetect') . '</p>' .
-//                            '<p>' . esc_html__('On this page, you are able to update your HateDetect settings.', 'hatedetect') . '</p>',
-//                    )
-//                );
-//
-//                $current_screen->add_help_tab(
-//                    array(
-//                        'id' => 'settings',
-//                        'title' => __('Settings', 'hatedetect'),
-//                        'content' =>
-//                            '<p><strong>' . esc_html__('HateDetect Configuration', 'hatedetect') . '</strong></p>' .
-//                            '<p><strong>' . esc_html__('API Key', 'hatedetect') . '</strong> - ' . esc_html__('Enter/remove an API key.', 'hatedetect') . '</p>' .
-//                            '<p><strong>' . esc_html__('Auto allow', 'hatedetect') . '</strong> - ' . esc_html__('Should plugin auto allow all comments which does not contain hate. (skips moderation verification)', 'hatedetect') . '</p>' .
-//                            '<p><strong>' . esc_html__('Notify after submitting', 'hatedetect') . '</strong> - ' . esc_html__('Show user after submitting comment if it was marked as hate speech.', 'hatedetect') . '</p>'.
-//                            '<p><strong>' . esc_html__('Notify in email', 'hatedetect') . '</strong> - ' . esc_html__('Send an email to comment\'s author if her/his comment was rejected because of hate speech and why. Requires configured SMTP server (for example with WP Mail SMTP by WPForms plugin)', 'hatedetect') . '</p>',
-//                        )
-//                );
-//
-//            }
+            $current_screen->add_help_tab(
+                array(
+                    'id' => 'setup-manual',
+                    'title' => __('Enter an API Key', 'hatedetect'),
+                    'content' =>
+                        '<p><strong>' . esc_html__('HateDetect Setup', 'hatedetect') . '</strong></p>' .
+                        '<p>' . esc_html__('If you already have an API key', 'hatedetect') . '</p>' .
+                        '<ol>' .
+                        '<li>' . esc_html__('Copy and paste the API key into the text field.', 'hatedetect') . '</li>' .
+                        '<li>' . esc_html__('Click the Use this Key button.', 'hatedetect') . '</li>' .
+                        '</ol>',
+                )
+            );
         }
     }
 
-//    public static function enter_api_key()
-//    {
-//        if (!current_user_can('manage_options')) {
-//            die(__('Cheatin&#8217; uh?', 'hatedetect'));
-//        }
-//
-//        if (!wp_verify_nonce($_POST['_wpnonce'], self::NONCE)) {
-//            return false;
-//        }
-//
-//        foreach (array('hatedetect_auto_allow',
-//                     'hatedetect_auto_discard',
-//                     'hatedetect_notify_user',
-//                     'hatedetect_show_comment_field_message') as $option) {
-//            update_option($option, isset($_POST[$option]) && (int)$_POST[$option] == 1 ? '1' : '0');
-//            HateDetect::log("Updated option: " . $option);
-//        }
-//        if (isset($_POST['hatedetect_lang'])) {
-//            if (array_key_exists($_POST['hatedetect_lang'], HateDetect_Admin::SUPPORTED_LANGS)) {
-//                add_option('hatedetect_lang', $_POST['hatedetect_lang']);
-//            }
-//        }
-//        if (!empty($_POST['hatedetect_comment_form_privacy_notice'])) {
-//            self::set_form_privacy_notice_option($_POST['hatedetect_comment_form_privacy_notice']);
-//        } else {
-//            self::set_form_privacy_notice_option('hide');
-//        }
-//
-//        $new_key = $_POST['key'];
-//        $old_key = HateDetect::get_api_key();
-//
-//
-//        if (empty($new_key)) {
-//            if (!empty($old_key)) {
-//                delete_option('hatedetect_api_key');
-//                self::$notices[] = 'new-key-empty';
-//            }
-//        } elseif ($new_key != $old_key) {
-//            self::check_key_status($new_key);
-//        }
-//
-//        return true;
-//    }
-//
-//    public static function check_key_status($api_key)
-//    {
-//        HateDetect::log("Verifying key: " . $api_key);
-//        $key_status = HateDetect::verify_key($api_key);
-//        update_option('hatedetect_key_status', $key_status);
-//
-//        if ($key_status == 'OK') {
-//            self::$notices['status'] = 'new-key-valid';
-//            HateDetect::manual_schedule_cron_recheck(15);
-//            return true;
-//        } else {
-//            self::$notices['status'] = 'new-key-' . $key_status;
-//            return false;
-//        }
-//    }
+    public static function enter_options()
+    {
+        if (!current_user_can('manage_options')) {
+            die(__('Cheatin&#8217; uh?', 'hatedetect'));
+        }
+
+        if (!wp_verify_nonce($_POST['_wpnonce'], self::NONCE)) {
+            return false;
+        }
+
+        foreach (array('hatedetect_auto_allow',
+                     'hatedetect_auto_discard',
+                     'hatedetect_notify_user',
+                     'hatedetect_show_comment_field_message') as $option) {
+            update_option($option, isset($_POST[$option]) && (int)$_POST[$option] == 1 ? '1' : '0');
+            HateDetect::log("Updated option: " . $option);
+        }
+        if (isset($_POST['hatedetect_lang'])) {
+            if (array_key_exists($_POST['hatedetect_lang'], HateDetect_Admin::SUPPORTED_LANGS)) {
+                add_option('hatedetect_lang', $_POST['hatedetect_lang']);
+            }
+        }
+        if (!empty($_POST['hatedetect_comment_form_privacy_notice'])) {
+            self::set_form_privacy_notice_option($_POST['hatedetect_comment_form_privacy_notice']);
+        } else {
+            self::set_form_privacy_notice_option('hide');
+        }
+
+        return true;
+    }
 
     public static function check_for_hate_button($comment_status)
     {
@@ -301,11 +244,6 @@ class HateDetect_Admin
 
         if ($comments_count->moderated > 0) {
             $classes[] = 'enable-on-load';
-
-//            if (!HateDetect::get_api_key()) {
-//                $link = add_query_arg(array('page' => 'hatedetect-key-config'), admin_url('options-general.php'));
-//                $classes[] = 'ajax-disabled';
-//            }
         }
 
         echo '<a

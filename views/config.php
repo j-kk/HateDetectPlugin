@@ -187,7 +187,7 @@
 
                         <?php wp_nonce_field(HateDetect_Admin::NONCE) ?>
                         <div id="publishing-action">
-                            <input type="hidden" name="action" value="enter-key">
+                            <input type="hidden" name="action" value="enter-options">
                             <input type="submit" name="submit" id="submit"
                                    class="hatedetect-button hatedetect-could-be-primary"
                                    value="<?php esc_attr_e('Save Changes', 'hatedetect'); ?>">
