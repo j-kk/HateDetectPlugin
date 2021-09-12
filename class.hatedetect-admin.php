@@ -188,6 +188,7 @@ class HateDetect_Admin {
 				'hatedetect_auto_allow',
 				'hatedetect_auto_discard',
 				'hatedetect_notify_user',
+				'hatedetect_notify_moderator',
 				'hatedetect_show_comment_field_message'
 			) as $option
 		) {
@@ -424,6 +425,9 @@ class HateDetect_Admin {
 		}
 		if ( get_option( 'hatedetect_notify_user' ) === false ) {
 			add_option( 'hatedetect_notify_user', '0' );
+		}
+		if ( get_option( 'hatedetect_notify_moderator' ) === false ) {
+			add_option( 'hatedetect_notify_moderator', '0' );
 		}
 		if ( get_option( 'hatedetect_lang' ) === false ) {
 			add_option( 'hatedetect_lang', 'en' );
