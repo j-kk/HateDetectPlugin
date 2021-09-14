@@ -188,12 +188,14 @@ class HateDetect_Admin {
 				'hatedetect_auto_allow',
 				'hatedetect_auto_discard',
 				'hatedetect_notify_user',
-				'hatedetect_notify_moderator',
-				'hatedetect_show_comment_field_message'
+				'hatedetect_show_comment_field_message',
+				'hatedetect_notify_moderator'
 			) as $option
 		) {
-			update_option( $option, isset( $_POST[ $option ] ) && (int) $_POST[ $option ] == 1 ? '1' : '0' );
-			HateDetect::log( "Updated option: " . $option );
+			$new_value = isset( $_POST[ $option ] ) && (int) $_POST[ $option ] == 1 ? '1' : '0';
+			if ( update_option( $option,  $new_value)) {
+				HateDetect::log( "Updated option: " . $option . " New value: " . $new_value );
+			}
 		}
 		if ( isset( $_POST['hatedetect_lang'] ) ) {
 			if ( array_key_exists( $_POST['hatedetect_lang'], HateDetect_Admin::SUPPORTED_LANGS ) ) {

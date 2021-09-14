@@ -138,8 +138,8 @@
                                     <label for="hatedetect_notify_moderator"
                                            title="<?php esc_attr_e('Send an email to moderator when hateful comment has been detected.', 'hatedetect'); ?>">
                                         <input
-                                                name="hatedetect_show_comment_field_message"
-                                                id="hatedetect_show_comment_field_message"
+                                                name="hatedetect_notify_moderator"
+                                                id="hatedetect_notify_moderator"
                                                 value="1"
                                                 type="checkbox"
 			                                <?php
