@@ -193,7 +193,7 @@ class HateDetect_Admin {
 			) as $option
 		) {
 			$new_value = isset( $_POST[ $option ] ) && (int) $_POST[ $option ] == 1 ? '1' : '0';
-			if ( update_option( $option,  $new_value)) {
+			if ( update_option( $option, $new_value ) ) {
 				HateDetect::log( "Updated option: " . $option . " New value: " . $new_value );
 			}
 		}
@@ -340,14 +340,14 @@ class HateDetect_Admin {
 				} else {
 					$desc = __( 'Hate speech', 'hatedetect' );
 				}
-			} elseif ( $hatedetect_result === '0') {
+			} elseif ( $hatedetect_result === '0' ) {
 
 				$desc = __( 'OK', 'hatedetect' );
 			} else {
-				$desc = __( 'No hate check performed', 'hatedetect' );
-				$desc_on_hover = __('This comment was probably submitted before activating plugin.', 'hatedetect');
+				$desc          = __( 'No hate check performed', 'hatedetect' );
+				$desc_on_hover = __( 'This comment was probably submitted before activating plugin.', 'hatedetect' );
 			}
-			if (is_null($desc_on_hover)) {
+			if ( is_null( $desc_on_hover ) ) {
 				$desc_on_hover = $desc;
 			}
 		}
