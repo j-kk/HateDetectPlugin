@@ -196,6 +196,11 @@ class HateDetect
                             $headers = array('Content-Type: text/html; charset=UTF-8');
                             wp_mail(strval($comment->comment_author_email), "Comment rejected", $mail_message, $headers);
                         }
+
+						if (self::notify_moderator()) {
+							wp_notify_moderator($id);
+						}
+
                         delete_comment_meta($comment->comment_ID, 'hatedetect_error');
                         return true;
                     } else {
@@ -520,10 +525,14 @@ class HateDetect
         return (get_option('hatedetect_auto_discard') === '1');
     }
 
-    public static function notify_user()
-    {
-        return (get_option('hatedetect_notify_user') === '1');
-    }
+	public static function notify_user()
+	{
+		return (get_option('hatedetect_notify_user') === '1');
+	}
+	public static function notify_moderator()
+	{
+		return (get_option('hatedetect_notify_moderator') === '1');
+	}
 
     public static function get_language()
     {

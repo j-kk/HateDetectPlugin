@@ -222,6 +222,7 @@ class HateDetect_Admin
         if (!current_user_can('manage_options')) {
             die(__('Cheatin&#8217; uh?', 'hatedetect'));
         }
+				
 
         if (!wp_verify_nonce($_POST['_wpnonce'], self::NONCE)) {
             return false;
@@ -230,6 +231,7 @@ class HateDetect_Admin
         foreach (array('hatedetect_auto_allow',
                      'hatedetect_auto_discard',
                      'hatedetect_notify_user',
+                     'hatedetect_notify_moderator',
                      'hatedetect_show_comment_field_message') as $option) {
             update_option($option, isset($_POST[$option]) && (int)$_POST[$option] == 1 ? '1' : '0');
             HateDetect::log("Updated option: " . $option);
@@ -466,6 +468,26 @@ class HateDetect_Admin
         return false;
     }
 
+	public static function display_configuration_page() {
+		// Set default setting values
+		if ( get_option( 'hatedetect_auto_discard' ) === false ) {
+			add_option( 'hatedetect_auto_discard', '0' );
+		}
+		if ( get_option( 'hatedetect_auto_allow' ) === false ) {
+			add_option( 'hatedetect_auto_allow', '0' );
+		}
+		if ( get_option( 'hatedetect_notify_user' ) === false ) {
+			add_option( 'hatedetect_notify_user', '0' );
+		}
+		if ( get_option( 'hatedetect_notify_moderator' ) === false ) {
+			add_option( 'hatedetect_notify_moderator', '0' );
+		}
+		if ( get_option( 'hatedetect_lang' ) === false ) {
+			add_option( 'hatedetect_lang', 'en' );
+		}
+		if ( get_option( 'hatedetect_show_comment_field_message' ) === false ) {
+			add_option( 'hatedetect_show_comment_field_message', '1' );
+		}
 
     public static function get_page_url($page = 'config')
     {

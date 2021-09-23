@@ -150,6 +150,24 @@
                                         <?php esc_html_e('Notify users after submitting comment about rejection (because of hate speech).', 'hatedetect'); ?>
                                         <br>
                                     </label>
+
+                                    <label for="hatedetect_notify_moderator"
+                                           title="<?php esc_attr_e('Send an email to moderator when hateful comment has been detected.', 'hatedetect'); ?>">
+                                        <input
+                                                name="hatedetect_show_comment_field_message"
+                                                id="hatedetect_show_comment_field_message"
+                                                value="1"
+                                                type="checkbox"
+			                                <?php
+
+			                                // If the option isn't set, or if it's enabled ('1'), or if it was enabled a long time ago ('true'), check the checkbox.
+			                                checked(true, (in_array(get_option('hatedetect_notify_moderator'), array(false, '1', 'true'), true)));
+
+			                                ?>
+                                        />
+		                                <?php esc_html_e('Send an email to moderator when hateful comment has been detected.', 'hatedetect'); ?>
+                                        <br>
+                                    </label>
                                 </p>
                             </td>
                         </tr>
