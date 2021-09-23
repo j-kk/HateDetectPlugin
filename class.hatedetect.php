@@ -2,8 +2,8 @@
 
 class HateDetect
 {
-    const API_HOST = '127.0.0.1';
-    const API_PORT = 5000;
+    const API_HOST = 'hateapi';
+    const API_PORT = 80;
     const MAX_DELAY_BEFORE_MODERATION_EMAIL = 86400; // One day in seconds
 
     private static bool $activated = false;
