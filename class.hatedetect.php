@@ -185,6 +185,21 @@ class HateDetect
                             wp_set_comment_status($comment->comment_ID, 'trash');
                         } else {
                             wp_set_comment_status($comment->comment_ID, 'hold');
+							if (self::notify_moderator()) {
+								$last_moderation_email_timestamp = get_option('hatedetect_last_moderation_email');
+								HateDetect::log('Last moderation email: '.$last_moderation_email_timestamp.' Actual time: '.time());
+								if ($last_moderation_email_timestamp && ($last_moderation_email_timestamp + self::MAX_DELAY_BEFORE_MODERATION_EMAIL >= time())) {
+									if (self::get_comments_hate_moderator() == 1) {
+										HateDetect::log('There has been an email sent in 24h, but queue has been cleared in the meantime. Comment id: '.$id);
+										wp_notify_moderator($id);
+										update_option('hatedetect_last_moderation_email', time());
+									}
+								} else {
+									HateDetect::log('No recent email sent. Sending now! Comment id: '.$id);
+									wp_notify_moderator($id);
+									update_option('hatedetect_last_moderation_email', time());
+								}
+							}
                         }
                         if (self::notify_user()) {
                             $hate_explanation = self::check_why_hate($id, $comment);
@@ -197,9 +212,6 @@ class HateDetect
                             wp_mail(strval($comment->comment_author_email), "Comment rejected", $mail_message, $headers);
                         }
 
-						if (self::notify_moderator()) {
-							wp_notify_moderator($id);
-						}
 
                         delete_comment_meta($comment->comment_ID, 'hatedetect_error');
                         return true;
@@ -538,4 +550,8 @@ class HateDetect
     {
         return get_option('hatedetect_lang');
     }
+	public static function get_comments_hate_moderator(): int {
+		global $wpdb;
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->commentmeta} NATURAL JOIN {$wpdb->comments} WHERE meta_key='hatedetect_result' AND meta_value='1' AND comment_approved ='0'");
+	}
 }
