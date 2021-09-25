@@ -16,7 +16,7 @@
         <?php Hatedetect_Admin::display_status(); ?>
         <div class="hatedetect-boxes">
             <?php
-            HateDetect::view('activate');
+            HateDetect::view('enter');
             ?>
         </div>
     </div>
