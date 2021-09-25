@@ -307,10 +307,12 @@ class HateDetect
      * @param array $args The arguments of the request (Array key => value pairs).
      * @param string $path The path for the request.
      * @param string|null $ip The specific IP address to hit.
+     * @param bool $decode_response Should response be decoded into associate array (json format).
+     * @param bool $use_api_key Should api key be used for the request,
      *
      * @return array A two-member array consisting of the headers and the response body, both empty in the case of a failure.
      */
-    public static function http_post(array $args, string $path, string $ip = null, bool $decode_response = true)
+    public static function http_post(array $args, string $path, string $ip = null, bool $decode_response = true, bool $use_api_key = true)
     {
 
         $hatedetect_ua = sprintf('WordPress/%s | HateDetect/%s', $GLOBALS['wp_version'], constant('HATEDETECT_VERSION'));
@@ -319,9 +321,12 @@ class HateDetect
         $host = self::API_HOST;
         $port = self::API_PORT;
 
-        if (!empty($api_key)) {
-            $args['api_key'] = self::get_api_key();
-        }
+		if ($use_api_key) {
+			$api_key = self::get_api_key(); # TODO what if null?
+			if ( is_null( $api_key ) ) {
+				return array( '', '' );
+			}
+		}
 
         $http_host = $host;
         // use a specific IP if provided
@@ -342,15 +347,16 @@ class HateDetect
             'data_format' => 'body'
         );
 
-        $hatedetect_url = $http_hatedetect_url = "http://{$http_host}:{$port}/{$path}";
+
+		if ($use_api_key) {
+			$hatedetect_url = $http_hatedetect_url = "http://{$http_host}:{$port}/{$path}?key={$api_key}";
+		} else {
+			$hatedetect_url = $http_hatedetect_url = "http://{$http_host}:{$port}/{$path}";
+		}
 
         HateDetect::log('REQUEST TO: ' . $hatedetect_url);
 
-        /**
-         * Try SSL first; if that fails, try without it and don't try it again for a while.
-         */
-
-        $ssl = $ssl_failed = false;
+		$ssl = $ssl_failed = false;
 
         // Check if SSL requests were disabled fewer than X hours ago.
         $ssl_disabled = get_option('hatedetect_ssl_disabled');
@@ -392,8 +398,6 @@ class HateDetect
 
         if (is_wp_error($response)) {
             do_action('hatedetect_request_failure', $response);
-
-
             return array('', '');
         }
 

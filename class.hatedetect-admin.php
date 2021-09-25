@@ -456,7 +456,7 @@ class HateDetect_Admin
         $debug['SITE_URL'] = site_url();
         $debug['HOME_URL'] = home_url();
 
-        $response = HateDetect::http_post(array(), 'test', null, false);
+        $response = HateDetect::http_post(array(), 'isalive', null, false, false);
 
         $debug['gethostbynamel'] = function_exists('gethostbynamel') ? 'exists' : 'not here';
         $debug['Test Connection'] = $response;
@@ -472,6 +472,7 @@ class HateDetect_Admin
 
 	public static function display_configuration_page() {
 		// Set default setting values
+		$api_key = HateDetect::get_api_key();
 		if ( get_option( 'hatedetect_auto_discard' ) === false ) {
 			add_option( 'hatedetect_auto_discard', '0' );
 		}
@@ -490,6 +491,8 @@ class HateDetect_Admin
 		if ( get_option( 'hatedetect_show_comment_field_message' ) === false ) {
 			add_option( 'hatedetect_show_comment_field_message', '1' );
 		}
+		HateDetect::view('config', compact('api_key'));
+	}
 
     public static function get_page_url($page = 'config')
     {
@@ -562,29 +565,6 @@ class HateDetect_Admin
         }
 
         HateDetect::view('start');
-    }
-
-    public static function display_configuration_page()
-    {
-        $api_key = HateDetect::get_api_key();
-        // Set default setting values
-        if (get_option('hatedetect_auto_discard') === false) {
-            add_option('hatedetect_auto_discard', '0');
-        }
-        if (get_option('hatedetect_auto_allow') === false) {
-            add_option('hatedetect_auto_allow', '0');
-        }
-        if (get_option('hatedetect_notify_user') === false) {
-            add_option('hatedetect_notify_user', '0');
-        }
-        if (get_option('hatedetect_lang') === false) {
-            add_option('hatedetect_lang', 'en');
-        }
-        if (get_option('hatedetect_show_comment_field_message') === false) {
-            add_option('hatedetect_show_comment_field_message', '1');
-        }
-
-        HateDetect::view('config', compact('api_key'));
     }
 
     public static function get_status()
