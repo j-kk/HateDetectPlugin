@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @package HateDetector
+ * @package HateDetection
  */
 
 /*

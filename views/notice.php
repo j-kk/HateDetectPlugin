@@ -54,26 +54,17 @@
 <?php elseif ( $type == 'missing' ) : ?>
     <div class="hatedetect-alert hatedetect-critical">
         <h3 class="hatedetect-key-status failed"><?php esc_html_e( 'There is a problem with your API key.', 'hatedetect' ); ?></h3>
-        <p class="hatedetect-description"><?php printf( __( 'Please contact <a href="%s" target="_blank">HateDetect support</a> for assistance.', 'hatedetect' ), 'https://hatedetect.com/contact/' ); ?></p>
     </div>
+<?php elseif ( $type == 'activated' ) : ?>
     <div class="hatedetect-alert hatedetect-active">
         <h3 class="hatedetect-key-status"><?php esc_html_e( 'HateDetect is now protecting your site from hate. Happy blogging!', 'hatedetect' ); ?></h3>
-		<?php if ( $check_pending_link ) { ?>
-            <p class="hatedetect-description"><?php printf( __( 'Would you like to <a href="%s">check pending comments</a>?', 'hatedetect' ), esc_url( $check_pending_link ) ); ?></p>
-		<?php } ?>
     </div>
 <?php elseif ( $type == 'new-key-invalid' ) : ?>
     <div class="hatedetect-alert hatedetect-critical">
         <h3 class="hatedetect-key-status"><?php esc_html_e( 'The key you entered is invalid. Please double-check it.', 'hatedetect' ); ?></h3>
     </div>
-<?php elseif ( $type == 'existing-key-invalid' ) : ?>
+<?php elseif ( $type == 'new-key-empty' ) : ?>
     <div class="hatedetect-alert hatedetect-critical">
-        <h3 class="hatedetect-key-status"><?php echo esc_html( __( 'Your API key is no longer valid.', 'hatedetect' ) ); ?></h3>
-        <p class="hatedetect-description"><?php printf( __( 'Please enter a new key or <a href="%s" target="_blank">contact HateDetect support</a>.', 'hatedetect' ), 'https://hatedetect.com/contact/' ); ?></p>
-    </div>
-<?php elseif ( $type == 'new-key-failed' ) : ?>
-    <div class="hatedetect-alert hatedetect-critical">
-        <h3 class="hatedetect-key-status"><?php esc_html_e( 'The API key you entered could not be verified.', 'hatedetect' ); ?></h3>
-        <p class="hatedetect-description"><?php esc_html_e( 'Try to use different api key or check your Internet connection.', 'hatedetect' ); ?></p>
+        <h3 class="hatedetect-key-status"><?php esc_html_e( 'Enter a key to proceed.', 'hatedetect' ); ?></h3>
     </div>
 <?php endif; ?>

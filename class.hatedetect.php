@@ -303,11 +303,11 @@ class HateDetect {
 	 * @param string $path The path for the request.
 	 * @param string|null $ip The specific IP address to hit.
 	 * @param bool $decode_response Should response be decoded into associate array (json format).
-	 * @param bool $use_api_key Should api key be used for the request,
+	 * @param string|null $api_key Should api key be overridden with other one. If null, use the default one
 	 *
 	 * @return array A two-member array consisting of the headers and the response body, both empty in the case of a failure.
 	 */
-	public static function http_post( array $args, string $path, string $ip = null, bool $decode_response = true, bool $use_api_key = true ) {
+	public static function http_post( array $args, string $path, string $ip = null, bool $decode_response = true, string $api_key = null ): array {
 
 		$hatedetect_ua = sprintf( 'WordPress/%s | HateDetect/%s', $GLOBALS['wp_version'], constant( 'HATEDETECT_VERSION' ) );
 		$hatedetect_ua = apply_filters( 'hatedetect_ua', $hatedetect_ua ); # Optional in future
@@ -315,7 +315,7 @@ class HateDetect {
 		$host = self::API_HOST;
 		$port = self::API_PORT;
 
-		if ( $use_api_key ) {
+		if ( is_null( $api_key ) ) {
 			$api_key = self::get_api_key(); # TODO what if null?
 			if ( is_null( $api_key ) ) {
 				return array( '', '' );
@@ -342,11 +342,7 @@ class HateDetect {
 		);
 
 
-		if ( $use_api_key ) {
-			$hatedetect_url = $http_hatedetect_url = "http://{$http_host}:{$port}/{$path}?key={$api_key}";
-		} else {
-			$hatedetect_url = $http_hatedetect_url = "http://{$http_host}:{$port}/{$path}";
-		}
+		$hatedetect_url = $http_hatedetect_url = "http://{$http_host}:{$port}/{$path}?key={$api_key}";
 
 		HateDetect::log( 'REQUEST TO: ' . $hatedetect_url );
 
@@ -439,37 +435,24 @@ class HateDetect {
 		wp_schedule_single_event( $time, 'hatedetect_schedule_cron_recheck', array( 'recheck' ) );
 	}
 
-	public static function verify_key( $key ) {
-		$request_args = array(
-			'api_key' => $key,
-			'blog'    => get_option( 'home' )
-		);
+	public static function verify_key( $key ): bool {
+		$old_key  = self::get_api_key();
+		$response = self::http_post( array(), 'isalive', null, false, $key );
 
-		$response = self::http_post( $request_args, 'verify-key' );
-
-		if ( ! empty( $response[1] ) ) {
-			if ( array_key_exists( "api_key", $response[1] ) && array_key_exists( "status", $response[1] ) ) {
-				if ( $response[1]['status'] == "OK" ) {
-					update_option( 'hatedetect_api_key', $key );
-					update_option( 'hatedetect_key_status', "OK" );
-					delete_option( 'hatedetect_alert_code' );
-					delete_option( 'hatedetect_alert_msg' );
-
-					return $response[1]['status'];
-				} else {
-					update_option( 'hatedetect_key_status', $response[1]['status'] );
-				}
-			} else {
-				update_option( 'hatedetect_key_status', "failed" );
-				delete_option( 'hatedetect_api_key' );
+		if ( $response && 'OK' == $response[1] ) {
+			update_option( 'hatedetect_api_key', $key );
+			if ( $old_key == false ) {
+				update_option( 'hatedetect_key_status', "Activated" );
 			}
-		} else {
-			update_option( 'hatedetect_key_status', "failed" );
-			delete_option( 'hatedetect_api_key' );
-		}
-		HateDetect::log( "Failed to verify key: " . wp_json_encode( $response ) );
 
-		return 'failed';
+			return true;
+		} else {
+			update_option( 'hatedetect_key_status', "Failed" );
+			delete_option( 'hatedetect_api_key' );
+			HateDetect::log( "Failed to verify key: " . wp_json_encode( $response ) );
+
+			return false;
+		}
 	}
 
 

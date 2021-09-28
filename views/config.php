@@ -7,6 +7,7 @@
         </div>
     </div>
     <div class="hatedetect-lower">
+	    <?php Hatedetect_Admin::display_api_key_warning(); ?>
 		<?php if ( HateDetect::get_api_key() ) { ?>
 			<?php HateDetect_Admin::display_status(); ?>
 		<?php } ?>

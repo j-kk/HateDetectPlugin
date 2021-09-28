@@ -249,8 +249,8 @@ class HateDetect_Admin {
 		if ( empty( $new_key ) ) {
 			if ( ! empty( $old_key ) ) {
 				delete_option( 'hatedetect_api_key' );
-				self::$notices[] = 'new-key-empty';
 			}
+			update_option('hatedetect_key_status', 'key_empty');
 		} elseif ( $new_key != $old_key ) {
 			self::check_key_status( $new_key );
 		}
@@ -261,15 +261,13 @@ class HateDetect_Admin {
 	public static function check_key_status( $api_key ) {
 		HateDetect::log( "Verifying key: " . $api_key );
 		$key_status = HateDetect::verify_key( $api_key );
-		update_option( 'hatedetect_key_status', $key_status );
 
-		if ( $key_status == 'OK' ) {
+		if ( $key_status ) {
 			self::$notices['status'] = 'new-key-valid';
 			HateDetect::manual_schedule_cron_recheck( 15 );
 
 			return true;
 		} else {
-			self::$notices['status'] = 'new-key-' . $key_status;
 
 			return false;
 		}
@@ -446,7 +444,7 @@ class HateDetect_Admin {
 		$debug['SITE_URL']               = site_url();
 		$debug['HOME_URL']               = home_url();
 
-		$response = HateDetect::http_post( array(), 'isalive', null, false, false );
+		$response = HateDetect::http_post( array(), 'isalive' , null, false);
 
 		$debug['gethostbynamel']  = function_exists( 'gethostbynamel' ) ? 'exists' : 'not here';
 		$debug['Test Connection'] = $response;
@@ -509,7 +507,17 @@ class HateDetect_Admin {
 	}
 
 	public static function display_api_key_warning() {
-		HateDetect::view( 'notice', array( 'type' => 'plugin' ) );
+		$key_status = get_option('hatedetect_key_status');
+		if ($key_status == 'Failed') {
+			HateDetect::view( 'notice', array( 'type' => 'new-key-invalid' ) );
+			delete_option('hatedetect_key_status');
+		} elseif ($key_status === 'Activated') {
+			HateDetect::view( 'notice', array( 'type' => 'activated' ) );
+			update_option('hatedetect_key_status', 'OK');
+		} elseif ($key_status == 'key_empty') {
+			HateDetect::view( 'notice', array( 'type' => 'new-key-empty' ) );
+			delete_option('hatedetect_key_status');
+		}
 	}
 
 	public static function display_page() {
@@ -525,6 +533,7 @@ class HateDetect_Admin {
 			if ( $_GET['action'] == 'delete-key' ) {
 				if ( isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], self::NONCE ) ) {
 					delete_option( 'hatedetect_api_key' );
+					delete_option('hatedetect_key_status');
 				}
 			}
 		}
