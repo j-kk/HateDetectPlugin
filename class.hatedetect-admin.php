@@ -250,7 +250,7 @@ class HateDetect_Admin {
 			if ( ! empty( $old_key ) ) {
 				delete_option( 'hatedetect_api_key' );
 			}
-			update_option('hatedetect_key_status', 'key_empty');
+			update_option( 'hatedetect_key_status', 'key_empty' );
 		} elseif ( $new_key != $old_key ) {
 			self::check_key_status( $new_key );
 		}
@@ -444,7 +444,7 @@ class HateDetect_Admin {
 		$debug['SITE_URL']               = site_url();
 		$debug['HOME_URL']               = home_url();
 
-		$response = HateDetect::http_post( array(), 'isalive' , null, false);
+		$response = HateDetect::http_post( array(), 'isalive', null, false ); // TODO response code
 
 		$debug['gethostbynamel']  = function_exists( 'gethostbynamel' ) ? 'exists' : 'not here';
 		$debug['Test Connection'] = $response;
@@ -507,16 +507,15 @@ class HateDetect_Admin {
 	}
 
 	public static function display_api_key_warning() {
-		$key_status = get_option('hatedetect_key_status');
-		if ($key_status == 'Failed') {
+		$key_status = get_option( 'hatedetect_key_status' );
+		if ( $key_status == 'Failed' ) {
 			HateDetect::view( 'notice', array( 'type' => 'new-key-invalid' ) );
-			delete_option('hatedetect_key_status');
-		} elseif ($key_status === 'Activated') {
+		} elseif ( $key_status === 'Activated' ) {
 			HateDetect::view( 'notice', array( 'type' => 'activated' ) );
-			update_option('hatedetect_key_status', 'OK');
-		} elseif ($key_status == 'key_empty') {
+			update_option( 'hatedetect_key_status', 'OK' );
+		} elseif ( $key_status == 'key_empty' ) {
 			HateDetect::view( 'notice', array( 'type' => 'new-key-empty' ) );
-			delete_option('hatedetect_key_status');
+			delete_option( 'hatedetect_key_status' );
 		}
 	}
 
@@ -533,7 +532,7 @@ class HateDetect_Admin {
 			if ( $_GET['action'] == 'delete-key' ) {
 				if ( isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], self::NONCE ) ) {
 					delete_option( 'hatedetect_api_key' );
-					delete_option('hatedetect_key_status');
+					delete_option( 'hatedetect_key_status' );
 				}
 			}
 		}
@@ -695,6 +694,7 @@ class HateDetect_Admin {
 		exit;
 	}
 
+
 	public static function admin_action_comment_explain_hate() {
 		$refer = wp_get_referer();
 		if ( wp_verify_nonce( $_REQUEST['_wpnonce'], 'explain_hate' ) ) {
@@ -706,18 +706,27 @@ class HateDetect_Admin {
 	}
 
 
+	/** Gets amount of comments marked as non-hateful.
+	 * @return int
+	 */
 	public static function get_user_comments_approved(): int {
 		global $wpdb;
 
 		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->commentmeta} WHERE meta_key='hatedetect_result' AND meta_value=1" );
 	}
 
+	/** Gets amount of comments marked as hateful.
+	 * @return int
+	 */
 	public static function get_user_comments_rejected(): int {
 		global $wpdb;
 
 		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->commentmeta} WHERE meta_key='hatedetect_result' AND meta_value=0" );
 	}
 
+	/** Gets amount of comments in database, which were encountered an error when checking for hate.
+	 * @return int amount of comments waiting for hate check.
+	 */
 	public static function get_user_comments_queued(): int {
 		global $wpdb;
 
