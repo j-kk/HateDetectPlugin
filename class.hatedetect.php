@@ -388,7 +388,8 @@ class HateDetect {
 
 		if ( is_null( $api_key ) ) {
 			$api_key = HateDetect_ApiKey::get_api_key();
-			if ( !$api_key ) {
+			if ( $api_key == false ) {
+				HateDetect::log('HTTP_POST cancelled, no api key provided');
 				return [ '', '', '' ];
 			}
 		}
@@ -414,8 +415,6 @@ class HateDetect {
 
 
 		$hatedetect_url = $http_hatedetect_url = "http://{$http_host}:{$port}/{$path}?key={$api_key}";
-
-		HateDetect::log( 'REQUEST TO: ' . $hatedetect_url . ' Content: ' . $args . ' Api key:' . $api_key );
 
 		$ssl = $ssl_failed = false;
 
@@ -459,7 +458,7 @@ class HateDetect {
 
 		if ( is_wp_error( $response ) ) {
 			do_action( 'hatedetect_request_failure', $response );
-			HateDetect::log( 'HTTP Request failure, response: ' . $response );
+			HateDetect::log( 'HTTP Request failure, response: ' . json_encode($response) );
 			update_option('hatedetect_connection', 'HTTP Request failure');
 
 			return [ '', '', '' ];
@@ -482,9 +481,12 @@ class HateDetect {
 		$code    = wp_remote_retrieve_response_code( $response );
 		$headers = $response['headers'];
 		if (200 <= $code && $code < 300) {
+			HateDetect::log( 'HTTP Request success, response: ' . json_encode($response) );
 			delete_option( 'hatedetect_connection' );
 		} else {
 			update_option('hatedetect_connection', 'Got error code: '.$code);
+			HateDetect::log( 'HTTP Request fail (error code: '.$code.' ), response: ' . json_encode($response) );
+
 		}
 		return [ $headers, $code, $data ];
 	}

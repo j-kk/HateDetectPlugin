@@ -8,16 +8,6 @@ class HateDetect_ApiKey {
      * @return false|string
 	 */
 	public static function get_api_key() {
-		# If key is set, but wrong
-		if ( !in_array(get_option( 'hatedetect_key_status' ), ['OK', 'Activated']) && get_option( 'hatedetect_api_key' ) ) {
-			# Check if still wrong
-			if ( self::check_key_status( get_option( 'hatedetect_api_key' ) ) ) {
-				return get_option( 'hatedetect_api_key' );
-			} else {
-				return false;
-			}
-		}
-
 		return get_option( 'hatedetect_api_key' );
 	}
 
@@ -30,7 +20,7 @@ class HateDetect_ApiKey {
 	 * @return bool|null true if key is valid, else false, when unable to connect returns null.
 	 */
 	public static function check_key_status( string $api_key ) {
-		HateDetect::log( 'Verifying key: ' . $api_key );
+		HateDetect::log( 'Checking key status: ' . $api_key );
 		$response = HateDetect::http_post( [], 'isalive', null, false, $api_key );
 
 		if ( $response && is_int( $response[1] ) ) {
@@ -72,6 +62,7 @@ class HateDetect_ApiKey {
 	 * @return bool|null true if key is valid, else false, when unable to connect returns null.
 	 */
 	public static function verify_key( string $key ) {
+		HateDetect::log( 'Verifying key: ' . $key );
 		$old_key  = get_option( 'hatedetect_api_key' );
 		$response = HateDetect::http_post( [], 'isalive', null, false, $key );
 
@@ -85,6 +76,7 @@ class HateDetect_ApiKey {
 				return true;
 			} elseif ($response[1] == 403 || $response[2] != 'OK' ) {
 				update_option( 'hatedetect_key_status', 'Failed' );
+				update_option( 'hatedetect_key_msg', $key );
 				HateDetect::log( 'Failed to verify key: ' . wp_json_encode( $response ) );
 				return false;
 			}

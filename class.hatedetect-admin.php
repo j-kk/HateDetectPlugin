@@ -571,7 +571,7 @@ class HateDetect_Admin
      */
     public static function display_api_key_warning()
     {
-		$key_status = HateDetect_ApiKey::get_key_status();
+		$key_status = get_option('hatedetect_key_status');
         if ($key_status == 'Failed') {
             HateDetect::view('notice', array('type' => 'new-key-invalid'));
         } elseif ($key_status === 'Activated') {
@@ -662,14 +662,15 @@ class HateDetect_Admin
      */
     public static function display_status()
     {
+		HateDetect::log('Displaying status now!');
+		self::display_api_key_warning();
 		# In case
 		$key_status = HateDetect_ApiKey::get_key_status();
 
-		self::display_api_key_warning();
 
 		if (HateDetect_ApiKey::get_api_key()) {
 			$hatedetect_connection = get_option('hatedetect_connection');
-			if (!$hatedetect_connection) {
+			if ($hatedetect_connection) {
 				$type = 'connection-error';
 				$notice_text = wp_kses( $hatedetect_connection, self::$allowed );
 				HateDetect::view( 'notice', compact(    'type', 'notice_text' ) );
