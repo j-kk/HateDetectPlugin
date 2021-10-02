@@ -7,13 +7,15 @@ class HateDetect {
 
 	private static bool $activated = false;
 
-	/** Plugin activation. Currently, empty stub.
+	/**
+     * Plugin activation. Currently, empty stub.
 	 *
 	 */
 	public static function plugin_activation() {
 	}
 
-	/** Plugin deactivation, cleans plugin settings and removes cron jobs.
+	/**
+     * Plugin deactivation, cleans plugin settings and removes cron jobs.
 	 *
 	 */
 	public static function plugin_deactivation() {
@@ -33,7 +35,8 @@ class HateDetect {
 		self::$activated = false;
 	}
 
-	/** Initializes all plugin hooks
+	/**
+     * Initializes all plugin hooks.
 	 *
 	 */
 	public static function init() {
@@ -57,13 +60,14 @@ class HateDetect {
 	}
 
 
-	/** If an option is enabled, displays a button after posting comment to check why comment was marked as hateful
-	 * (only if marked)
+	/**
+     * If an option is enabled, displays a button after posting comment to check why comment was marked as hateful
+	 * (only if marked).
 	 *
 	 * @param string $comment_text comment content
 	 * @param WP_COMMENT|null $comment data
 	 *
-	 * @return string comment text
+	 * @return string comment text.
 	 */
 	public static function display_after_posting_comment( string $comment_text, WP_Comment|null $comment ): string {
 		if ( is_null( $comment ) ) {
@@ -99,7 +103,8 @@ class HateDetect {
 	}
 
 
-	/** Checks comment for hate.
+	/**
+     * Checks comment for hate.
 	 *
 	 * @param int $id comment id
 	 * @param WP_Comment $comment comment data
@@ -120,7 +125,8 @@ class HateDetect {
 		return self::check_ishate_response( $id, $comment, $response );
 	}
 
-	/** Checks comment for hate from the database.
+	/**
+     * Checks comment for hate from the database.
 	 *
 	 * @param string $id comment id
 	 *
@@ -150,7 +156,8 @@ class HateDetect {
 	}
 
 
-	/** Checks why comment has been flagged as hate
+	/**
+     * Checks why comment has been flagged as hate.
 	 *
 	 * @param int $id comment id
 	 * @param WP_Comment $comment commend data
@@ -193,14 +200,15 @@ class HateDetect {
 	}
 
 
-	/** Reads response from the hatedetect api and updates comment status.
+	/**
+     * Reads response from the hatedetect api and updates comment status.
 	 * Basing on the plugin settings it may notify user or moderator.
 	 *
 	 * @param string $id comment id
 	 * @param WP_Comment $comment comment data
 	 * @param array $response received from the hatedetect api
 	 *
-	 * @return bool True if message was correctly read, false if there was a problem with response or api key
+	 * @return bool True if message was correctly read, false if there was a problem with response or api key.
 	 */
 	private static function check_ishate_response( string $id, WP_Comment $comment, array $response ): bool {
 		if ( is_integer( $response[1] ) && 200 <= $response[1] && $response[1] < 300 ) {
@@ -292,7 +300,8 @@ class HateDetect {
 	}
 
 
-	/** Registered as action to launch after editing comment. Rechecks new comment text.
+	/**
+     * Registered as action to launch after editing comment. Rechecks new comment text.
 	 *
 	 * @param int $comment_ID comment id.
 	 * @param array $data wp comment data.
@@ -301,8 +310,9 @@ class HateDetect {
 		HateDetect::check_db_comment( $comment_ID );
 	}
 
-	/** Performs a cron recheck. Looks for submitted, unapproved comments without hate detection result. Maximum 100 comments
-	 * per operation, rest will be scheduled within short time.
+	/**
+     * Performs a cron recheck. Looks for submitted, unapproved comments without hate detection result. Maximum 100
+     * comments per operation, rest will be scheduled within short time.
 	 *
 	 * @param string $reason behind scheduling a recheck.
 	 *
@@ -365,7 +375,8 @@ class HateDetect {
 	 * @param bool $decode_response Should response be decoded into associate array (json format).
 	 * @param string|null $api_key Should api key be overridden with other one. If null, use the default one
 	 *
-	 * @return array A three-member array consisting of the headers, response code and the response body, both empty in the case of a failure.
+	 * @return array A three-member array consisting of the headers, response code and the response body, both empty
+     *               in the case of a failure.
 	 */
 	public static function http_post( array $args, string $path, string $ip = null, bool $decode_response = true, string $api_key = null ): array {
 
@@ -474,7 +485,8 @@ class HateDetect {
 	}
 
 
-	/** Manually schedule comment recheck. Ensures that job scheduling hasn't been duplicated.
+	/**
+     * Manually schedule comment recheck. Ensures that job scheduling hasn't been duplicated.
 	 *
 	 * @param int|null $delay in seconds to start comment recheck.
 	 */
@@ -513,7 +525,8 @@ class HateDetect {
 		}
 	}
 
-	/** Display view.
+	/**
+     * Display view.
 	 *
 	 * @param string $name of the view to display.
 	 * @param array $args args to pass to the view.
@@ -534,7 +547,8 @@ class HateDetect {
 
 
 	/**
-	 * Controls the display of a privacy related notice underneath the comment form using the `hatedetect_comment_form_privacy_notice` option and filter respectively.
+	 * Controls the display of a privacy related notice underneath the comment form using
+     * the `hatedetect_comment_form_privacy_notice` option and filter respectively.
 	 * Default is top not display the notice, leaving the choice to site admins, or integrators.
 	 */
 	public static function display_comment_form_privacy_notice() {
@@ -552,7 +566,8 @@ class HateDetect {
 	}
 
 
-	/** Checks either if automatic comment allow option is selected.
+	/**
+     * Checks either if automatic comment allow option is selected.
 	 *
 	 * @return bool option setting.
 	 */
@@ -560,7 +575,8 @@ class HateDetect {
 		return ( get_option( 'hatedetect_auto_allow' ) === '1' );
 	}
 
-	/** Checks either if automatic comment discard option is selected.
+	/**
+     * Checks either if automatic comment discard option is selected.
 	 *
 	 * @return bool option setting.
 	 */
@@ -568,7 +584,8 @@ class HateDetect {
 		return ( get_option( 'hatedetect_auto_discard' ) === '1' );
 	}
 
-	/** Checks either if notify user (email author) option is selected.
+	/**
+     * Checks either if notify user (email author) option is selected.
 	 *
 	 * @return bool option setting.
 	 */
@@ -576,7 +593,8 @@ class HateDetect {
 		return ( get_option( 'hatedetect_notify_user' ) === '1' );
 	}
 
-	/** Checks either if notify moderator (email moderator) option is selected.
+	/**
+     * Checks either if notify moderator (email moderator) option is selected.
 	 *
 	 * @return bool option setting.
 	 */
@@ -584,7 +602,8 @@ class HateDetect {
 		return ( get_option( 'hatedetect_notify_moderator' ) === '1' );
 	}
 
-	/** Retrieves plugin language (in which hate should be detected).
+	/**
+     * Retrieves plugin language (in which hate should be detected).
 	 *
 	 * @return string selected language.
 	 */
@@ -592,7 +611,8 @@ class HateDetect {
 		return get_option( 'hatedetect_lang' );
 	}
 
-	/** Retrieves amount of hateful comments awaiting review.
+	/**
+     * Retrieves amount of hateful comments awaiting review.
 	 *
 	 * @return int amount of the comments.
 	 */

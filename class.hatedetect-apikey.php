@@ -3,8 +3,10 @@
 class HateDetect_ApiKey {
 
 
-	/** Retrieves hatedetect api key. False if not found
-	 * @return false|string
+	/**
+     * Retrieves hatedetect api key. False if not found
+	 *
+     * @return false|string
 	 */
 	public static function get_api_key(): bool|string {
 		# If key is set, but wrong
@@ -21,8 +23,9 @@ class HateDetect_ApiKey {
 	}
 
 
-	/** Verifies either if key is correct or not.
-	 *  When key is correct, it overrides current key (or sets it if unset).
+	/**
+     * Verifies either if key is correct or not.
+	 * When key is correct, it overrides current key (or sets it if unset).
 	 *
 	 * @param string $key to validate.
 	 *

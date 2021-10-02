@@ -71,7 +71,7 @@ class HateDetect_Admin
     }
 
     /**
-     * Initialization of admin control page
+     * Initialization of admin control page.
      */
     public static function admin_init()
     {
@@ -96,7 +96,7 @@ class HateDetect_Admin
     }
 
     /**
-     * Initialization admin menu
+     * Initialization admin menu.
      */
     public static function admin_menu()
     {
@@ -104,7 +104,7 @@ class HateDetect_Admin
     }
 
     /**
-     * Creating admin head page
+     * Creating admin head page.
      */
     public static function admin_head()
     {
@@ -113,7 +113,9 @@ class HateDetect_Admin
         }
     }
 
-    /** Creating plugin setting page
+    /**
+     * Creating plugin setting page.
+     *
      * @param array $links base weblink
      * @return array links
      */
@@ -127,7 +129,7 @@ class HateDetect_Admin
     }
 
     /**
-     *  Loading setting menu
+     *  Loading setting menu.
      */
     public static function load_menu()
     {
@@ -142,7 +144,7 @@ class HateDetect_Admin
     }
 
     /**
-     *  Loading additional resources
+     *  Loading additional resources.
      */
     public static function load_resources()
     {
@@ -173,7 +175,7 @@ class HateDetect_Admin
     }
 
     /**
-     * Add help to the HateDetect page
+     * Add help to the HateDetect page.
      *
      */
     public static function admin_help()
@@ -239,9 +241,10 @@ class HateDetect_Admin
         }
     }
 
-    /** Access managing control by entering api key to access hatedetect detection model.
+    /**
+     * Access managing control by entering api key to access hatedetect detection model.
      *
-     * @return bool|void result of passing the api key
+     * @return bool|void result of passing the api key.
      */
     public static function enter_api_key()
     {
@@ -295,6 +298,13 @@ class HateDetect_Admin
         return true;
     }
 
+    /**
+     * Checking api key status.
+     * Api key is necessary to connect with hate detection model.
+     *
+     * @param $api_key string api key
+     * @return bool true if key is valid, else false.
+     */
 	public static function check_key_status( $api_key ) {
 		HateDetect::log( 'Verifying key: ' . $api_key );
 		$key_status = HateDetect_ApiKey::verify_key( $api_key );
@@ -310,11 +320,12 @@ class HateDetect_Admin
         }
     }
 
-    /** Creating button for checking if comment is hateful.
+    /**
+     *  Creating button for checking if comment is hateful.
      *  Applied only to comment with comment_approved=0, which means an un-trashed, un-hate,
      *  not-yet-moderated comment.
      *
-     * @param mixed $comment_status comment status
+     * @param mixed $comment_status comment status.
      */
     public static function check_for_hate_button($comment_status)
     {
@@ -404,7 +415,8 @@ class HateDetect_Admin
     }
 
 
-    /** Processing of comments that await check for hate speech detection.
+    /**
+     * Processing of comments that await check for hate speech detection.
      *
      * @param int $start start index
      * @param int $limit maximum length of comments to check
@@ -446,7 +458,8 @@ class HateDetect_Admin
         return $result_counts;
     }
 
-    /** Add action to each comment which shows results of hate detection.
+    /**
+     * Add action to each comment which shows results of hate detection.
      *
      * @param $a mixed action
      * @param WP_Comment $comment comment to which add new action
@@ -485,7 +498,9 @@ class HateDetect_Admin
         return $a;
     }
 
-    /** Add plugin action links
+    /**
+     * Add plugin action links.
+     *
      * @param $links mixed base website link
      * @param $file mixed additional files to add to plugin for a display.
      * @return mixed links
@@ -503,7 +518,8 @@ class HateDetect_Admin
     }
 
 
-    /** Checking connetction to the server with hate detection model.
+    /**
+     * Checking connection to the server with hate detection model.
      *
      * @return bool is servers connected
      */
@@ -531,6 +547,9 @@ class HateDetect_Admin
         return false;
     }
 
+    /**
+     * Displays hatedetect plugin configuration page.
+     */
     public static function display_configuration_page()
     {
         // Set default setting values
@@ -556,6 +575,12 @@ class HateDetect_Admin
         HateDetect::view('config', compact('api_key'));
     }
 
+    /**
+     * Getter of page url.
+     *
+     * @param string $page config page
+     * @return string New URL query string (unescaped).
+     */
     public static function get_page_url($page = 'config')
     {
         $args = array('page' => 'hatedetect-key-config');
@@ -572,6 +597,9 @@ class HateDetect_Admin
         return add_query_arg($args, admin_url('options-general.php'));
     }
 
+    /**
+     * Displays alert.
+     */
     public static function display_alert()
     {
         HateDetect::view('notice', array(
@@ -581,6 +609,9 @@ class HateDetect_Admin
         ));
     }
 
+    /**
+     * Displays warning in case of api key warning.
+     */
     public static function display_api_key_warning()
     {
         $key_status = get_option('hatedetect_key_status');
@@ -595,6 +626,9 @@ class HateDetect_Admin
         }
     }
 
+    /**
+     * Displays page for hatedetect plugin.
+     */
     public static function display_page()
     {
         if (!HateDetect::get_api_key() || (isset($_GET['view']) && $_GET['view'] == 'start')) {
@@ -604,6 +638,9 @@ class HateDetect_Admin
         }
     }
 
+    /**
+     * Displays start page for hatedetect plugin. Start page concerns api key entry.
+     */
     public static function display_start_page()
     {
         if (isset($_GET['action'])) {
@@ -638,6 +675,11 @@ class HateDetect_Admin
         HateDetect::view('start');
     }
 
+    /**
+     * Getter og api key status.
+     *
+     * @return false|mixed|void result of check of api key.
+     */
     public static function get_status()
     {
         if (get_option('hatedetect_key_status') === false) {
@@ -649,6 +691,9 @@ class HateDetect_Admin
         return get_option('hatedetect_key_status');
     }
 
+    /**
+     * Displays notice regarding hatedetect plugin usage.
+     */
     public static function display_notice() # TODO
     {
         global $hook_suffix;
@@ -694,6 +739,9 @@ class HateDetect_Admin
         }
     }
 
+    /**
+     * Displays status during usage of plugin.
+     */
     public static function display_status()
     {
         if (!self::check_server_connectivity()) {
@@ -729,6 +777,11 @@ class HateDetect_Admin
     }
 
 
+    /**
+     * Setter for choosing option of displaying privacy notice option in setting form.
+     *
+     * @param $state string states how to display privacy notice (hide or show).
+     */
     private static function set_form_privacy_notice_option($state)
     {
         if (in_array($state, array('display', 'hide'))) {
@@ -737,6 +790,14 @@ class HateDetect_Admin
     }
 
 
+    /**
+     *
+     * Adding specified actions to comment list row.
+     *
+     * @param array|mixed $actions action to add
+     * @param WP_Comment $comment selected comment
+     * @return mixed new actions.
+     */
     public static function modify_comments_list_row_actions($actions, WP_Comment $comment)
     {
         $nonce = wp_create_nonce('check_for_hate');
@@ -766,6 +827,9 @@ class HateDetect_Admin
     }
 
 
+    /**
+     * Adding admin action to check comment for hate speech on demand.
+     */
     public static function admin_action_comment_check_for_hate()
     {
         $refer = wp_get_referer();
@@ -778,6 +842,9 @@ class HateDetect_Admin
     }
 
 
+    /**
+     * Adding admin action to explain hate speech source for comment marked as hateful.
+     */
     public static function admin_action_comment_explain_hate()
     {
         $refer = wp_get_referer();
@@ -790,8 +857,10 @@ class HateDetect_Admin
     }
 
 
-    /** Gets amount of comments marked as non-hateful.
-     * @return int
+    /**
+     * Gets amount of comments marked as non-hateful.
+     *
+     * @return int number of non-hateful comments.
      */
     public static function get_user_comments_approved(): int
     {
@@ -800,8 +869,10 @@ class HateDetect_Admin
         return (int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->commentmeta} WHERE meta_key='hatedetect_result' AND meta_value=1");
     }
 
-    /** Gets amount of comments marked as hateful.
-     * @return int
+    /**
+     * Gets amount of comments marked as hateful.
+     *
+     * @return int number of hateful comments.
      */
     public static function get_user_comments_rejected(): int
     {
@@ -810,8 +881,10 @@ class HateDetect_Admin
         return (int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->commentmeta} WHERE meta_key='hatedetect_result' AND meta_value=0");
     }
 
-    /** Gets amount of comments in database, which were encountered an error when checking for hate.
-     * @return int amount of comments waiting for hate check.
+    /**
+     * Gets amount of comments in database, which were encountered an error when checking for hate.
+     *
+     * @return int number of comments waiting for hate check.
      */
     public static function get_user_comments_queued(): int
     {
