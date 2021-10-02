@@ -7,7 +7,7 @@
 /*
 Plugin Name: HateDetect
 Plugin URI: codeagainsthate.eu
-Description: HateDetect checks your comments using the codeagainsthate service to see if they contain hate speech or not
+Description: HateDetect checks your comments using the code against hate service to see if they contain hate speech or not
 Version: 0.1
 Author: qqkk
 License: A "Slug" license name e.g. GPL2
