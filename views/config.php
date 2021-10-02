@@ -7,10 +7,7 @@
         </div>
     </div>
     <div class="hatedetect-lower">
-	    <?php Hatedetect_Admin::display_api_key_warning(); ?>
-		<?php if ( HateDetect::get_api_key() ) { ?>
-			<?php HateDetect_Admin::display_status(); ?>
-		<?php } ?>
+	    <?php Hatedetect_Admin::display_status(); ?>
 		<?php if ( ! empty( $notices ) ) { ?>
 			<?php foreach ( $notices as $notice ) { ?>
 				<?php HateDetect::view( 'notice', $notice ); ?>
@@ -37,7 +34,7 @@
                                                                  value="<?php echo esc_attr( get_option( 'hatedetect_api_key' ) ); ?>"
                                                                  class="<?php echo esc_attr( 'regular-text code ' ); ?>">
                                     </span>
-                                <span class='hatedetect-key-status'>Status: <?php echo esc_attr( HateDetect_Admin::get_status() ); ?>
+                                <span class='hatedetect-key-status'>Status: <?php echo esc_attr( HateDetect_ApiKey::get_key_status() ); ?>
                                     </span>
                             </td>
                         </tr>

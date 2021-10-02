@@ -12,7 +12,7 @@
                 <div class="aa_button_container">
                     <div class="aa_button_border">
                         <input type="submit" class="aa_button"
-                               value="<?php esc_attr_e( 'Set up your HateDetect account', 'hatedetect' ); ?>"/>
+                               value="<?php esc_attr_e( 'Set up your HateDetect configuration', 'hatedetect' ); ?>"/>
                     </div>
                 </div>
                 <div class="aa_description"><?php _e( '<strong>Almost done</strong> - configure HateDetect and say goodbye to hate', 'hatedetect' ); ?></div>
@@ -42,6 +42,13 @@
 <?php elseif ( $type == 'notice' ) : ?>
     <div class="hatedetect-alert hatedetect-critical">
         <h3 class="hatedetect-key-status failed"><?php echo $notice_header; ?></h3>
+        <p class="hatedetect-description">
+			<?php echo $notice_text; ?>
+        </p>
+    </div>
+<?php elseif ( $type == 'connection-error' ) : ?>
+    <div class="hatedetect-alert hatedetect-critical">
+        <h3 class="hatedetect-key-status failed"><?php esc_html_e( "Your site encountered an error when connecting to the HateDetect servers.", 'hatedetect' ); ?></h3>
         <p class="hatedetect-description">
 			<?php echo $notice_text; ?>
         </p>

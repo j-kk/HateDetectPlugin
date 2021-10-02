@@ -460,6 +460,7 @@ class HateDetect {
 		if ( is_wp_error( $response ) ) {
 			do_action( 'hatedetect_request_failure', $response );
 			HateDetect::log( 'HTTP Request failure, response: ' . $response );
+			update_option('hatedetect_connection', 'HTTP Request failure');
 
 			return [ '', '', '' ];
 		}
@@ -480,7 +481,11 @@ class HateDetect {
 
 		$code    = wp_remote_retrieve_response_code( $response );
 		$headers = $response['headers'];
-
+		if (200 <= $code && $code < 300) {
+			delete_option( 'hatedetect_connection' );
+		} else {
+			update_option('hatedetect_connection', 'Got error code: '.$code);
+		}
 		return [ $headers, $code, $data ];
 	}
 
@@ -518,7 +523,7 @@ class HateDetect {
 	 *
 	 * @param mixed $hatedetect_debug The data to log.
 	 */
-	public static function log( $hatedetect_debug ) {
+	public static function log( mixed $hatedetect_debug ) {
 		if ( apply_filters( 'hatedetect_debug_log', defined( 'WP_DEBUG' ) &&
 		                                            WP_DEBUG ) ) {
 			error_log( print_r( compact( 'hatedetect_debug' ), true ) );
