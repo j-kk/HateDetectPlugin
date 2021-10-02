@@ -264,7 +264,7 @@ class HateDetect_Admin
 		}
 		if ( isset( $_POST['hatedetect_lang'] ) ) {
 			if ( array_key_exists( $_POST['hatedetect_lang'], HateDetect_Admin::SUPPORTED_LANGS ) ) {
-				add_option( 'hatedetect_lang', $_POST['hatedetect_lang'] );
+				update_option( 'hatedetect_lang', $_POST['hatedetect_lang'] );
 			}
 		}
 		if ( ! empty( $_POST['hatedetect_comment_form_privacy_notice'] ) ) {
