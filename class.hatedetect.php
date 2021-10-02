@@ -69,7 +69,7 @@ class HateDetect {
 	 *
 	 * @return string comment text.
 	 */
-	public static function display_after_posting_comment( string $comment_text, WP_Comment|null $comment ): string {
+	public static function display_after_posting_comment( string $comment_text, $comment ): string {
 		if ( is_null( $comment ) ) {
 			return $comment_text;
 		}
@@ -164,7 +164,7 @@ class HateDetect {
 	 *
 	 * @return false|string Explanation or False if unable to check explanation.
 	 */
-	public static function check_why_hate( int $id, WP_Comment $comment ): bool|string {
+	public static function check_why_hate( int $id, WP_Comment $comment ) {
 		HateDetect::log( 'Checking why hate: ' . strval( $id ) . ' comment: ' . $comment->comment_content . PHP_EOL );
 		if ( ! HateDetect_ApiKey::get_api_key() ) {
 			return false;
@@ -521,9 +521,9 @@ class HateDetect {
 	 * core, "WP_DEBUG_DISPLAY and WP_DEBUG_LOG perform no function unless
 	 * WP_DEBUG is true), but can be disabled via the hatedetect_debug_log filter.
 	 *
-	 * @param mixed $hatedetect_debug The data to log.
+	 * @param string $hatedetect_debug The data to log.
 	 */
-	public static function log( mixed $hatedetect_debug ) {
+	public static function log( string $hatedetect_debug ) {
 		if ( apply_filters( 'hatedetect_debug_log', defined( 'WP_DEBUG' ) &&
 		                                            WP_DEBUG ) ) {
 			error_log( print_r( compact( 'hatedetect_debug' ), true ) );
