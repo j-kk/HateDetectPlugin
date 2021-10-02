@@ -433,11 +433,11 @@ class HateDetect_Admin
     /**
      * Add action to each comment which shows results of hate detection.
      *
-     * @param mixed $a action
+     * @param array $a action
      * @param WP_Comment $comment comment to which add new action
-     * @return mixed  action
+     * @return array  action
      */
-    public static function comment_row_action( mixed $a, WP_Comment $comment): mixed {
+    public static function comment_row_action( array $a, WP_Comment $comment): array {
         $hatedetect_result = get_comment_meta($comment->comment_ID, 'hatedetect_result', true);
         $hatedetect_error = get_comment_meta($comment->comment_ID, 'hatedetect_error', true);
         $hatedetect_explanation = get_comment_meta($comment->comment_ID, 'hatedetect_explanation', true);
@@ -700,9 +700,9 @@ class HateDetect_Admin
      *
      * @param array|mixed $actions action to add
      * @param WP_Comment $comment selected comment
-     * @return mixed new actions.
+     * @return array new actions.
      */
-    public static function modify_comments_list_row_actions($actions, WP_Comment $comment): mixed {
+    public static function modify_comments_list_row_actions($actions, WP_Comment $comment): array {
         $nonce = wp_create_nonce('check_for_hate');
         $args = array(
             'c' => $comment->comment_ID,
