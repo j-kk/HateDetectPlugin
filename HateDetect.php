@@ -25,6 +25,7 @@ register_activation_hook( __FILE__, array( 'HateDetect', 'plugin_activation' ) )
 register_deactivation_hook( __FILE__, array( 'HateDetect', 'plugin_deactivation' ) );
 
 require_once( HATEDETECT__PLUGIN_DIR . 'class.hatedetect.php' );
+require_once( HATEDETECT__PLUGIN_DIR . 'class.hatedetect-apikey.php' );
 
 add_action( 'init', array( 'HateDetect', 'init' ) );
 
