@@ -13,11 +13,11 @@
         </div>
     </div>
     <div class="hatedetect-lower">
-        <?php Hatedetect_Admin::display_status(); ?>
+		<?php Hatedetect_Admin::display_status(); ?>
         <div class="hatedetect-boxes">
-            <?php
-            HateDetect::view('activate');
-            ?>
+			<?php
+			HateDetect::view( 'enter' );
+			?>
         </div>
     </div>
 </div>
