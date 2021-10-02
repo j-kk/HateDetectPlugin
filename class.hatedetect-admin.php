@@ -26,7 +26,10 @@ class HateDetect_Admin
     );
     private static array $notices = array();
 
-    public static function init()
+	/**
+	 * Initializes plugin admin actions.
+	 */
+	public static function init()
     {
         if (!self::$initiated) {
             self::init_hooks();
@@ -37,7 +40,7 @@ class HateDetect_Admin
         }
     }
 
-    /***
+    /**
      * Initialization of all hooks for purpose of hatedetect WordPress plugin.
      */
     public static function init_hooks()
@@ -73,10 +76,10 @@ class HateDetect_Admin
     /**
      * Initialization of admin control page.
      */
-    public static function admin_init()
+    public static function admin_init() # TODo
     {
-        if (get_option('Activated_HateDetect')) {
-            delete_option('Activated_HateDetect');
+        if (get_option('hatedetect_menu_activated')) {
+            delete_option('hatedetect_menu_activated');
             if (!headers_sent()) {
                 wp_redirect(add_query_arg(array(
                     'page' => 'hatedetect-key-config',
@@ -100,8 +103,14 @@ class HateDetect_Admin
      */
     public static function admin_menu()
     {
-        self::load_menu();
-    }
+	    $hook = add_options_page(__('HateDetect', 'hatedetect'), __('HateDetect', 'hatedetect'), 'manage_options', 'hatedetect-key-config', array(
+		    'HateDetect_Admin',
+		    'display_page'
+	    ));
+
+	    if ($hook) {
+		    add_action("load-$hook", array('HateDetect_Admin', 'admin_help'));
+	    }    }
 
     /**
      * Creating admin head page.
@@ -117,30 +126,15 @@ class HateDetect_Admin
      * Creating plugin setting page.
      *
      * @param array $links base weblink
+     *
      * @return array links
      */
-    public static function admin_plugin_settings_link($links)
-    {
+    public static function admin_plugin_settings_link(array $links): array {
         $settings_link = '<a href="' . esc_url(self::get_page_url()) . '">' . __('Settings', 'hatedetect') . '</a>';
         array_unshift($links, $settings_link);
-        HateDetect::log("admin_plugin_settings_links links:  " . wp_json_encode($links));
+        HateDetect::log( 'admin_plugin_settings_links links:  ' . wp_json_encode($links));
 
         return $links;
-    }
-
-    /**
-     *  Loading setting menu.
-     */
-    public static function load_menu()
-    {
-        $hook = add_options_page(__('HateDetect', 'hatedetect'), __('HateDetect', 'hatedetect'), 'manage_options', 'hatedetect-key-config', array(
-            'HateDetect_Admin',
-            'display_page'
-        ));
-
-        if ($hook) {
-            add_action("load-$hook", array('HateDetect_Admin', 'admin_help'));
-        }
     }
 
     /**
@@ -176,12 +170,11 @@ class HateDetect_Admin
 
     /**
      * Add help to the HateDetect page.
-     *
      */
     public static function admin_help()
     {
         $current_screen = get_current_screen();
-
+		# TODO verify help contents
 		// Screen Content
 		if ( current_user_can( 'manage_options' ) ) {
 			if ( ! HateDetect_ApiKey::get_api_key() || ( isset( $_GET['view'] ) && $_GET['view'] == 'start' ) ) {
@@ -249,7 +242,7 @@ class HateDetect_Admin
     public static function enter_api_key()
     {
         if (!current_user_can('manage_options')) {
-            die(__('Cheatin&#8217; uh?', 'hatedetect'));
+            die(__('not an admin', 'hatedetect'));
         }
 
 
@@ -302,10 +295,10 @@ class HateDetect_Admin
      * Checking api key status.
      * Api key is necessary to connect with hate detection model.
      *
-     * @param $api_key string api key
+     * @param string $api_key api key
      * @return bool true if key is valid, else false.
      */
-	public static function check_key_status( $api_key ) {
+	public static function check_key_status( string $api_key ): bool {
 		HateDetect::log( 'Verifying key: ' . $api_key );
 		$key_status = HateDetect_ApiKey::verify_key( $api_key );
 
@@ -325,9 +318,9 @@ class HateDetect_Admin
      *  Applied only to comment with comment_approved=0, which means an un-trashed, un-hate,
      *  not-yet-moderated comment.
      *
-     * @param mixed $comment_status comment status.
+     * @param string $comment_status comment status.
      */
-    public static function check_for_hate_button($comment_status)
+    public static function check_for_hate_button( string $comment_status)
     {
         // The "Check for Hate" button should only appear when the page might be showing
         // a comment with comment_approved=0, which means an un-trashed, un-hate,
@@ -352,7 +345,7 @@ class HateDetect_Admin
         if ($comments_count->moderated > 0) {
             $classes[] = 'enable-on-load';
 
-            if (!HateDetect::get_api_key()) {
+            if (!HateDetect_ApiKey::get_api_key()) {
                 $link = add_query_arg(array('page' => 'hatedetect-key-config'), admin_url('options-general.php'));
                 $classes[] = 'ajax-disabled';
             }
@@ -420,11 +413,11 @@ class HateDetect_Admin
      *
      * @param int $start start index
      * @param int $limit maximum length of comments to check
+     *
      * @return array count of processed comments, count of marked as hate comments and count of comments
      *               that encountered an error while processing.
      */
-    public static function recheck_queue_portion($start = 0, $limit = 100)
-    {
+    public static function recheck_queue_portion(int $start = 0, int $limit = 100): array {
         global $wpdb;
 
         if ($limit <= 0) {
@@ -461,18 +454,17 @@ class HateDetect_Admin
     /**
      * Add action to each comment which shows results of hate detection.
      *
-     * @param $a mixed action
+     * @param mixed $a action
      * @param WP_Comment $comment comment to which add new action
      * @return mixed  action
      */
-    public static function comment_row_action($a, WP_Comment $comment)
-    {
+    public static function comment_row_action( mixed $a, WP_Comment $comment): mixed {
         $hatedetect_result = get_comment_meta($comment->comment_ID, 'hatedetect_result', true);
         $hatedetect_error = get_comment_meta($comment->comment_ID, 'hatedetect_error', true);
         $hatedetect_explanation = get_comment_meta($comment->comment_ID, 'hatedetect_explanation', true);
         $desc = null;
         $desc_on_hover = null;
-        HateDetect::log('Comment row action, id: ' . $comment->comment_ID . ' result:' . $hatedetect_result . " error: " . $hatedetect_error);
+        HateDetect::log('Comment row action, id: ' . $comment->comment_ID . ' result:' . $hatedetect_result . ' error: ' . $hatedetect_error);
         if ($hatedetect_error) {
             $desc = __('Awaiting hate check', 'hatedetect');
             $desc_on_hover = __('Plugin was unable to connect to HateDetect servers. Comment will be checked again soon.', 'hatedetect');
@@ -501,18 +493,17 @@ class HateDetect_Admin
     /**
      * Add plugin action links.
      *
-     * @param $links mixed base website link
-     * @param $file mixed additional files to add to plugin for a display.
+     * @param mixed $links base website link
+     * @param mixed $file additional files to add to plugin for a display.
      * @return mixed links
      */
-    public static function plugin_action_links($links, $file)
-    {
-        HateDetect::log("plugin_action_links entry links:  " . wp_json_encode($links) . "   file:   " . wp_json_encode($file));
+    public static function plugin_action_links( mixed $links, mixed $file): mixed {
+        HateDetect::log( 'plugin_action_links entry links:  ' . wp_json_encode($links) . '   file:   ' . wp_json_encode($file));
         if ($file == plugin_basename(plugin_dir_url(__FILE__) . '/hatedetect.php')) {
             $links[] = '<a href="' . esc_url(self::get_page_url()) . '">' . esc_html__('Settings', 'hatedetect') . '</a>';
         }
 
-        HateDetect::log("plugin_action_links out links:  " . wp_json_encode($links) . "   file:   " . wp_json_encode($file));
+        HateDetect::log( 'plugin_action_links out links:  ' . wp_json_encode($links) . '   file:   ' . wp_json_encode($file));
 
         return $links;
     }
@@ -523,8 +514,7 @@ class HateDetect_Admin
      *
      * @return bool is servers connected
      */
-    public static function check_server_connectivity()
-    {
+    public static function check_server_connectivity(): bool {
         $debug = array();
         $debug['PHP_VERSION'] = PHP_VERSION;
         $debug['WORDPRESS_VERSION'] = $GLOBALS['wp_version'];
@@ -553,7 +543,7 @@ class HateDetect_Admin
     public static function display_configuration_page()
     {
         // Set default setting values
-        $api_key = HateDetect::get_api_key();
+        $api_key = HateDetect_ApiKey::get_api_key();
         if (get_option('hatedetect_auto_discard') === false) {
             add_option('hatedetect_auto_discard', '0');
         }
@@ -579,10 +569,10 @@ class HateDetect_Admin
      * Getter of page url.
      *
      * @param string $page config page
+     *
      * @return string New URL query string (unescaped).
      */
-    public static function get_page_url($page = 'config')
-    {
+    public static function get_page_url( string $page = 'config'): string {
         $args = array('page' => 'hatedetect-key-config');
 
         if ($page == 'delete_key') {
@@ -631,7 +621,7 @@ class HateDetect_Admin
      */
     public static function display_page()
     {
-        if (!HateDetect::get_api_key() || (isset($_GET['view']) && $_GET['view'] == 'start')) {
+        if (!HateDetect_ApiKey::get_api_key() || (isset($_GET['view']) && $_GET['view'] == 'start')) {
             self::display_start_page();
         } else {
             self::display_configuration_page();
@@ -652,24 +642,10 @@ class HateDetect_Admin
             }
         }
 
-        if ($api_key = HateDetect::get_api_key() && (empty(self::$notices['status']) || 'existing-key-invalid' != self::$notices['status'])) {
+        if ($api_key = HateDetect_ApiKey::get_api_key() && (empty(self::$notices['status']) || 'existing-key-invalid' != self::$notices['status'])) {
             self::display_configuration_page();
 
             return;
-        }
-
-        if (isset($_GET['token'])) {
-            $api_key_status = HateDetect::verify_key($_GET['token']);
-        }
-        if (isset($_GET['action'])) {
-            if ($_GET['action'] == 'save-key') {
-                if ($api_key_status == 'OK') {
-                    self::check_key_status($_GET['token']);
-                    self::display_configuration_page();
-
-                    return;
-                }
-            }
         }
 
         HateDetect::view('start');
@@ -683,9 +659,9 @@ class HateDetect_Admin
     public static function get_status()
     {
         if (get_option('hatedetect_key_status') === false) {
-            self::check_key_status(HateDetect::get_api_key());
+            self::check_key_status(HateDetect_ApiKey::get_api_key());
         } elseif (get_option('hatedetect_key_status') != 'OK') {
-            self::check_key_status(HateDetect::get_api_key());
+            self::check_key_status(HateDetect_ApiKey::get_api_key());
         }
 
         return get_option('hatedetect_key_status');
@@ -711,7 +687,7 @@ class HateDetect_Admin
             if (get_option('hatedetect_alert_code') > 0) {
                 self::display_alert();
             }
-        } elseif (('plugins.php' === $hook_suffix || 'edit-comments.php' === $hook_suffix) && !HateDetect::get_api_key()) {
+        } elseif (('plugins.php' === $hook_suffix || 'edit-comments.php' === $hook_suffix) && !HateDetect_ApiKey::get_api_key()) {
             // Show the "Set Up HateDetect" banner on the comments and plugin pages if no API key has been set.
             self::display_api_key_warning();
         }
@@ -734,7 +710,7 @@ class HateDetect_Admin
             }
 
             echo '<div class="notice notice-success"><p>' . esc_html($message) . '</p></div>';
-        } else if (isset($_GET['hatedetect_recheck_error'])) {
+        } elseif (isset($_GET['hatedetect_recheck_error'])) {
             echo '<div class="notice notice-error"><p>' . esc_html(__('HateDetect could not recheck your comments for hate.', 'hatedetect')) . '</p></div>';
         }
     }
@@ -746,9 +722,9 @@ class HateDetect_Admin
     {
         if (!self::check_server_connectivity()) {
             HateDetect::view('notice', array('type' => 'servers-be-down'));
-        } else if (!empty(self::$notices)) {
+        } elseif (!empty(self::$notices)) {
             foreach (self::$notices as $index => $type) {
-                HateDetect::log("Displaying notices: ");
+                HateDetect::log( 'Displaying notices: ' );
                 if (is_object($type)) {
                     HateDetect::log($type);
                     $notice_header = $notice_text = '';
@@ -780,9 +756,9 @@ class HateDetect_Admin
     /**
      * Setter for choosing option of displaying privacy notice option in setting form.
      *
-     * @param $state string states how to display privacy notice (hide or show).
+     * @param string $state states how to display privacy notice (hide or show).
      */
-    private static function set_form_privacy_notice_option($state)
+    private static function set_form_privacy_notice_option( string $state)
     {
         if (in_array($state, array('display', 'hide'))) {
             update_option('hatedetect_comment_form_privacy_notice', $state);
@@ -798,8 +774,7 @@ class HateDetect_Admin
      * @param WP_Comment $comment selected comment
      * @return mixed new actions.
      */
-    public static function modify_comments_list_row_actions($actions, WP_Comment $comment)
-    {
+    public static function modify_comments_list_row_actions($actions, WP_Comment $comment): mixed {
         $nonce = wp_create_nonce('check_for_hate');
         $args = array(
             'c' => $comment->comment_ID,
