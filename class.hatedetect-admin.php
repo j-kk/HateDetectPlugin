@@ -731,7 +731,7 @@ class HateDetect_Admin
 
 
     /**
-     * Adding admin action to check comment for hate speech on demand.
+     * Handling admin action to check comment for hate speech on demand (in comments view).
      */
     public static function admin_action_comment_check_for_hate()
     {
@@ -746,7 +746,7 @@ class HateDetect_Admin
 
 
     /**
-     * Adding admin action to explain hate speech source for comment marked as hateful.
+     * Handling admin action to explain hate speech source for comment marked as hateful (in comments view).
      */
     public static function admin_action_comment_explain_hate()
     {
