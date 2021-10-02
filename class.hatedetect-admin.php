@@ -350,7 +350,7 @@ class HateDetect_Admin
 				data-pending-comment-count="' . esc_attr($comments_count->moderated) . '"
 				data-nonce="' . esc_attr(wp_create_nonce('hatedetect_check_for_hate')) . '"
 				' . (!in_array('ajax-disabled', $classes) ? 'onclick="return false;"' : '') . '
-				>' . esc_html__('Check for Hate', 'hatedetect') . '</a>';
+				>' . esc_html__('Check awaiting comments for hate', 'hatedetect') . '</a>';
         echo '<span class="checkforhate-spinner"></span>';
     }
 
