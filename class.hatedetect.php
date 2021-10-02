@@ -59,6 +59,7 @@ class HateDetect {
 
 	/** If an option is enabled, displays a button after posting comment to check why comment was marked as hateful
 	 * (only if marked)
+	 *
 	 * @param string $comment_text comment content
 	 * @param WP_COMMENT|null $comment data
 	 *
@@ -107,9 +108,6 @@ class HateDetect {
 	 */
 	public static function check_comment( int $id, WP_Comment $comment ): bool {
 		HateDetect::log( 'Checking comment: ' . strval( $id ) . ' comment: ' . $comment->comment_content . PHP_EOL );
-		if ( ! self::get_api_key() ) {
-			return false;
-		}
 
 		$lang         = get_option( 'hatedetect_lang' );
 		$request_args = [
@@ -123,14 +121,12 @@ class HateDetect {
 	}
 
 	/** Checks comment for hate from the database.
+	 *
 	 * @param string $id comment id
 	 *
 	 * @return bool True if operation was succeeded.
 	 */
 	public static function check_db_comment( string $id ): bool {
-		if ( ! self::get_api_key() ) {
-			return false;
-		}
 
 		$retrieved_comment = get_comment( $id );
 
@@ -143,7 +139,7 @@ class HateDetect {
 			'comment_author'  => $retrieved_comment->comment_author
 		];
 
-		$response = self::http_post( $request_args, 'ishate' );
+		$response = self::http_post( $request_args, 'predict' );
 
 		$response_success = self::check_ishate_response( $id, $retrieved_comment, $response );
 		if ( $response_success ) {
@@ -155,14 +151,15 @@ class HateDetect {
 
 
 	/** Checks why comment has been flagged as hate
+	 *
 	 * @param int $id comment id
 	 * @param WP_Comment $comment commend data
 	 *
 	 * @return false|string Explanation or False if unable to check explanation.
 	 */
-	public static function check_why_hate( int $id, WP_Comment $comment ) {
+	public static function check_why_hate( int $id, WP_Comment $comment ): bool|string {
 		HateDetect::log( 'Checking why hate: ' . strval( $id ) . ' comment: ' . $comment->comment_content . PHP_EOL );
-		if ( ! self::get_api_key() ) {
+		if ( ! HateDetect_ApiKey::get_api_key() ) {
 			return false;
 		}
 		$hate_explanation = get_comment_meta( $id, 'hatedetect_explanation' );
@@ -190,16 +187,11 @@ class HateDetect {
 		} else {
 			update_option( 'hatedetect_key_status', 'Failed' );
 		}
+
 		return false;
 
 	}
 
-	/** Retrieves hatedetect api key. False if not found
-	 * @return false|string
-	 */
-	public static function get_api_key(): bool|string {
-		return get_option( 'hatedetect_api_key' );
-	}
 
 	/** Reads response from the hatedetect api and updates comment status.
 	 * Basing on the plugin settings it may notify user or moderator.
@@ -319,10 +311,9 @@ class HateDetect {
 	public static function cron_recheck( string $reason = 'unknown' ) {
 		HateDetect::log( 'Performing cron_recheck, reason: ' . $reason );
 		global $wpdb;
-		$api_key = self::get_api_key();
+		$api_key = HateDetect_ApiKey::get_api_key();
 
-		$status = self::verify_key( $api_key );
-		if ( get_option( 'hatedetect_alert_code' ) || $status != 'OK' ) {
+		if ( ! $api_key ) {
 			// since there is currently a problem with the key, reschedule a check for 6 hours hence
 			return;
 		}
@@ -385,8 +376,8 @@ class HateDetect {
 		$port = self::API_PORT;
 
 		if ( is_null( $api_key ) ) {
-			$api_key = self::get_api_key(); # TODO what if null?
-			if ( is_null( $api_key ) ) {
+			$api_key = HateDetect_ApiKey::get_api_key();
+			if ( !$api_key ) {
 				return [ '', '', '' ];
 			}
 		}
@@ -479,12 +470,6 @@ class HateDetect {
 		$code    = wp_remote_retrieve_response_code( $response );
 		$headers = $response['headers'];
 
-		if ( isset( $headers['x-hatedetect_alert_code'] ) ) {
-			update_option( 'hatedetect_alert_code', $headers['x-hatedetect_alert_code'] );
-			update_option( 'hatedetect_alert_msg', $headers['x-hatedetect_alert_msg'] );
-			self::verify_key( self::get_api_key() );
-		}
-
 		return [ $headers, $code, $data ];
 	}
 
@@ -511,34 +496,6 @@ class HateDetect {
 		HateDetect::log( 'Cron recheck scheduled at: ' . $time . ' Current time: ' . time() );
 		wp_schedule_single_event( $time, 'hatedetect_schedule_cron_recheck', [ 'recheck' ] );
 	}
-
-	/** Verifies either if key is correct or not.
-	 *  When key is correct, it overrides current key (or sets it if unset).
-	 *
-	 * @param string $key to validate.
-	 *
-	 * @return bool result of the key validation
-	 */
-	public static function verify_key( string $key ): bool {
-		$old_key  = self::get_api_key();
-		$response = self::http_post( [], 'isalive', null, false, $key ); // TODO response code
-
-		if ( $response && 'OK' == $response[1] ) {
-			update_option( 'hatedetect_api_key', $key );
-			if ( $old_key == false ) {
-				update_option( 'hatedetect_key_status', 'Activated' );
-			}
-
-			return true;
-		} else {
-			update_option( 'hatedetect_key_status', 'Failed' );
-			delete_option( 'hatedetect_api_key' );
-			HateDetect::log( 'Failed to verify key: ' . wp_json_encode( $response ) );
-
-			return false;
-		}
-	}
-
 
 	/**
 	 * Log debugging info to the error log.
