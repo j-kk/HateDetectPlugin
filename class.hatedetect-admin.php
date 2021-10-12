@@ -472,11 +472,11 @@ class HateDetect_Admin
     /**
      * Add plugin action links.
      *
-     * @param mixed $links base website link
-     * @param mixed $file additional files to add to plugin for a display.
-     * @return mixed links
+     * @param array $links base website link
+     * @param string $file additional files to add to plugin for a display.
+     * @return array links
      */
-    public static function plugin_action_links( mixed $links, mixed $file): mixed {
+    public static function plugin_action_links( array $links, string $file): array {
         HateDetect::log( 'plugin_action_links entry links:  ' . wp_json_encode($links) . '   file:   ' . wp_json_encode($file));
         if ($file == plugin_basename(plugin_dir_url(__FILE__) . '/hatedetect.php')) {
             $links[] = '<a href="' . esc_url(self::get_page_url()) . '">' . esc_html__('Settings', 'hatedetect') . '</a>';
