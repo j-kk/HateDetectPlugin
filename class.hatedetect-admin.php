@@ -450,7 +450,17 @@ class HateDetect_Admin
         } elseif (!is_null($hatedetect_result)) {
             if ($hatedetect_result === '1') {
                 if ($hatedetect_explanation) {
-                    $desc = __('Hate speech, reason: ' . $hatedetect_explanation, 'hatedetect');
+                    $explanation_text =  __("general hate", 'hatedetect');
+                    if (is_array($hatedetect_explanation['Reasons'])){
+                        if (array_key_exists('nbrs', $hatedetect_explanation['Reasons']) && array_key_exists('dtxfy', $hatedetect_explanation['Reasons'])) {
+                            $explanation_text = implode(", ",$hatedetect_explanation['Reasons']['nbrs']). ' '. implode(" ",$hatedetect_explanation['Reasons']['dtxfy']) ;
+                        }
+                        else{
+                            $explanation_text = implode(", ", $hatedetect_explanation['Reasons']);
+                        }
+                        $explanation_text = strtolower(str_replace( array("<", ">", "_"), " ",  $explanation_text));
+                    }
+                    $desc = __('Hate speech, reason: ' .$explanation_text, 'hatedetect');
                 } else {
                     $desc = __('Hate speech', 'hatedetect');
                 }

@@ -98,7 +98,7 @@ class HateDetect {
     /**
      * Prints the explanation of the hate detection model reasoning.
      * Explanation is composed of four parts (detection of hateful parts, reasons,
-     * potentially vulgar (or derogatory) words and the note.
+     * potentially vulgar (or derogatory) words and the note).
      *
      * @param $wp_comment WP_Comment  comment marked as hateful
      */
