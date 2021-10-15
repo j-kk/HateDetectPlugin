@@ -12,7 +12,7 @@ HateDetect checks your comments using the codeagainsthate service to see if they
 
 HateDetect checks your comments using the [codeagainsthate](codeagainsthate.eu) service to see whether they contain hate speech.
 
-It provide easy access to see which comments contain hateful content.
+It provides easy access to see which comments contain hateful content.
 The plugin allows you to automatize actions regarding comment approval or rejection.
 In case when comment contains hate, it also provides an explanation, why comment was marked as hateful.
 The explanation may be shown to the user after submitting the comment (decision is left to the administrator).

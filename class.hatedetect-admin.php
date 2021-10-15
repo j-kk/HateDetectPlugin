@@ -449,9 +449,9 @@ class HateDetect_Admin
             $desc_on_hover = __('Plugin was unable to connect to HateDetect servers. Comment will be checked again soon.', 'hatedetect');
         } elseif (!is_null($hatedetect_result)) {
             if ($hatedetect_result === '1') {
-                if ($hatedetect_explanation) {
+                if (is_array($hatedetect_explanation)) {
                     $explanation_text =  __("general hate", 'hatedetect');
-                    if (is_array($hatedetect_explanation['Reasons'])){
+                    if (array_key_exists('Reasons', $hatedetect_explanation) && is_array($hatedetect_explanation['Reasons'])){
                         if (array_key_exists('nbrs', $hatedetect_explanation['Reasons']) && array_key_exists('dtxfy', $hatedetect_explanation['Reasons'])) {
                             $explanation_text = implode(", ",$hatedetect_explanation['Reasons']['nbrs']). ' '. implode(" ",$hatedetect_explanation['Reasons']['dtxfy']) ;
                         }
