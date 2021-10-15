@@ -1,8 +1,8 @@
 <?php
 
 class HateDetect {
-	const API_HOST = 'hateapi';
-	const API_PORT = 80;
+    const API_HOST = 'modera-backend.endpoints.opcode-327611.cloud.goog';
+    const API_PORT = 80;
 	const MAX_DELAY_BEFORE_MODERATION_EMAIL = 86400; // One day in seconds
 
 	private static bool $activated = false;
@@ -75,32 +75,73 @@ class HateDetect {
 		}
 		$id           = $comment->comment_ID;
 		$comment_meta = get_comment_meta( $id );
+        $form_name = "explain_form_".$id;
 		if ( array_key_exists( 'hatedetect_result', $comment_meta ) && $comment_meta['hatedetect_result'][0] == 1 ) {
 			if ( $comment->comment_approved == 1 ) {
 				return $comment_text;
 			} elseif ( get_option( 'hatedetect_show_comment_field_message', '0' ) === '1' && ! current_user_can( 'manage_options' ) ) {
 				$message = __( 'Your comment was marked as a hateful by HateDetect plugin.', 'hatedetect' );
 				echo '<em> ' . $message . '</em>';
-
-				function explain_print( $wp_comment ) {
-					$explanation = HateDetect::check_why_hate( $wp_comment->comment_ID, $wp_comment );
-					echo '<em>' . __( 'The model explanation: ', 'hatedetect' ) . $explanation . ' </em> <br> <br>';
-				}
-
 				echo ' <form  method="post">
-                       <input type="submit" name="explain" value="Explain why the comment is hateful">
+                       <input type="submit" name='.$form_name.' value="Explain why the comment is hateful">
                        </form>';
-				if ( array_key_exists( 'explain', $_POST ) && $_POST['explain'] && $_SERVER['REQUEST_METHOD'] == 'POST' ) {
-					explain_print( $comment );
+				if ( array_key_exists( $form_name, $_POST ) && $_POST[$form_name] && $_SERVER['REQUEST_METHOD'] == 'POST' ) {
+                    HateDetect::explain_print( $comment );
 				}
-
 				return $comment_text;
 			}
 		}
-
-
 		return $comment_text;
 	}
+
+
+    /**
+     * Prints the explanation of the hate detection model reasoning.
+     * Explanation is composed of four parts (detection of hateful parts, reasons,
+     * potentially vulgar (or derogatory) words and the note.
+     *
+     * @param $wp_comment WP_Comment  comment marked as hateful
+     */
+    private static function explain_print( $wp_comment ) {
+        $explanation = HateDetect::check_why_hate( $wp_comment->comment_ID, $wp_comment );
+        if (is_string($explanation)){
+            echo '<em>' . __( 'The model explanation: ', 'hatedetect' ) . $explanation . ' </em> <br>';
+        }
+        elseif (is_array($explanation) && array_key_exists("Hatefull part", $explanation )
+            && array_key_exists("Reasons", $explanation )
+            && array_key_exists("Pottentialy vulgar (or derogatory) words", $explanation )
+            && array_key_exists("Note", $explanation )  ) {
+
+            $reason_text =  __("general hate", 'hatedetect');
+            if (is_array($explanation['Reasons'])){
+               if (array_key_exists('nbrs', $explanation['Reasons']) && array_key_exists('dtxfy', $explanation['Reasons'])) {
+                $reason_text = strtolower(str_replace( array("<", ">", "_"), " ", implode(", ",$explanation['Reasons']['nbrs'])) ). ' '.  strtolower(str_replace( array("<", ">", "_"), " ",implode(" ",$explanation['Reasons']['dtxfy']))) ;
+               }
+               else{
+                   $reason_text = strtolower(str_replace( array("<", ">", "_"), " ",implode(", ", $explanation['Reasons'])));
+               }
+            }
+            $vulgar_words = '';
+            if (is_array($explanation['Pottentialy vulgar (or derogatory) words'])){
+                foreach($explanation['Pottentialy vulgar (or derogatory) words'] as $item){
+                    if (is_array($item)){
+                        $vulgar_words .= implode(", ", array_keys($item));
+                    }
+                }
+            }
+            if($vulgar_words == ''){
+               $vulgar_words =  __("not detected", 'hatedetect');
+            }
+            $end = ' ';
+
+            echo '<em> <b> ' . __( 'The model detected following hateful parts of your comment: ', 'hatedetect' ) . '</b>'. $explanation["Hatefull part"] .
+                ' <br> <b> ' . __( 'The model classified your comment as: ', 'hatedetect' ) . '</b>'. $reason_text .
+                ' <br> <b> ' . __( 'The model detected following potentially vulgar or derogatory words: ', 'hatedetect' ) . '</b>'. $vulgar_words .
+                ' <br>  <b> ' . __( 'Additional important note: ', 'hatedetect' ) . '</b>'. $explanation['Note'] . '</em>' .
+                ' <br> ' . $end ;
+
+        }
+    }
 
 
 	/**
