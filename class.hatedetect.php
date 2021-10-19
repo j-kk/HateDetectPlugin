@@ -81,10 +81,11 @@ class HateDetect {
 				return $comment_text;
 			} elseif ( get_option( 'hatedetect_show_comment_field_message', '0' ) === '1' && ! current_user_can( 'manage_options' ) ) {
 				$message = __( 'Your comment was marked as a hateful by HateDetect plugin.', 'hatedetect' );
-				echo '<em> ' . $message . '</em>';
-				echo ' <form  method="post">
+				echo wp_kses_data('<em> ' . $message . '</em>');
+                $explain_button = ' <form  method="post"> 
                        <input type="submit" name='.$form_name.' value="Explain why the comment is hateful">
                        </form>';
+                echo wp_kses_decode_entities($explain_button);
 				if ( array_key_exists( $form_name, $_POST ) && $_POST[$form_name] && $_SERVER['REQUEST_METHOD'] == 'POST' ) {
                     HateDetect::explain_print( $comment );
 				}
@@ -105,7 +106,7 @@ class HateDetect {
     private static function explain_print( $wp_comment ) {
         $explanation = HateDetect::check_why_hate( $wp_comment->comment_ID, $wp_comment );
         if (is_string($explanation)){
-            echo '<em>' . __( 'The model explanation: ', 'hatedetect' ) . $explanation . ' </em> <br>';
+            echo wp_kses_data('<em>' . __( 'The model explanation: ', 'hatedetect' ) . $explanation . ' </em> <br>');
         }
         elseif (is_array($explanation) && array_key_exists("Hatefull part", $explanation )
             && array_key_exists("Reasons", $explanation )
@@ -134,11 +135,11 @@ class HateDetect {
             }
             $end = ' ';
 
-            echo '<em> <b> ' . __( 'The model detected following hateful parts of your comment: ', 'hatedetect' ) . '</b>'. $explanation["Hatefull part"] .
+            echo wp_kses_post('<em> <b> ' . __( 'The model detected following hateful parts of your comment: ', 'hatedetect' ) . '</b>'. $explanation["Hatefull part"] .
                 ' <br> <b> ' . __( 'The model classified your comment as: ', 'hatedetect' ) . '</b>'. $reason_text .
                 ' <br> <b> ' . __( 'The model detected following potentially vulgar or derogatory words: ', 'hatedetect' ) . '</b>'. $vulgar_words .
                 ' <br>  <b> ' . __( 'Additional important note: ', 'hatedetect' ) . '</b>'. $explanation['Note'] . '</em>' .
-                ' <br> ' . $end ;
+                ' <br> ' . $end) ;
 
         }
     }
@@ -604,13 +605,13 @@ class HateDetect {
 			return;
 		}
 		# TODO privacy policy
-		echo apply_filters(
+		echo wp_kses_post_deep(apply_filters(
 			'hatedetect_comment_form_privacy_notice_markup',
 			'<p class="hatedetect_comment_form_privacy_notice">' . sprintf(
 				__( 'This site uses HateDetect to reduce hate. <a href="%s" target="_blank" rel="nofollow noopener">Learn how your comment data is processed</a>.', 'hatedetect' ),
-				'codeagainsthate.eu'
+				'https://codeagainsthate.eu'
 			) . '</p>'
-		);
+		));
 	}
 
 

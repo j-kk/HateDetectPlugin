@@ -195,9 +195,9 @@
                             <td><select name="hatedetect_lang">
 									<?php foreach ( HateDetect_Admin::SUPPORTED_LANGS as $lang => $langFullName ) { ?>
 										<?php if ( get_option( 'hatedetect_lang' ) === $lang ) {
-											echo "<option value='$lang' selected='selected'>" . $langFullName . "</option>";
+											echo wp_kses_decode_entities("<option value='$lang' selected='selected'>" . $langFullName . "</option>");
 										} else {
-											echo "<option value='$lang'>" . $langFullName . "</option>";
+											echo wp_kses_decode_entities("<option value='$lang'>" . $langFullName . "</option>");
 										}
 										?>
 									<?php } ?>

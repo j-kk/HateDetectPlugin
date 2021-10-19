@@ -330,7 +330,7 @@ class HateDetect_Admin
             }
         }
 
-        echo '<a
+        echo wp_kses_decode_entities('<a
 				class="' . esc_attr(implode(' ', $classes)) . '"' .
             (!empty($link) ? ' href="' . esc_url($link) . '"' : '') .
             /* translators: The placeholder is for showing how much of the process has completed, as a percent. e.g., "Checking for hate (40%)" */
@@ -350,7 +350,7 @@ class HateDetect_Admin
 				data-pending-comment-count="' . esc_attr($comments_count->moderated) . '"
 				data-nonce="' . esc_attr(wp_create_nonce('hatedetect_check_for_hate')) . '"
 				' . (!in_array('ajax-disabled', $classes) ? 'onclick="return false;"' : '') . '
-				>' . esc_html__('Check awaiting comments for hate', 'hatedetect') . '</a>';
+				>' . esc_html__('Check awaiting comments for hate', 'hatedetect') . '</a>');
         echo '<span class="checkforhate-spinner"></span>';
     }
 
@@ -473,7 +473,7 @@ class HateDetect_Admin
 
         HateDetect::log('Comment row action, id: ' . $comment->comment_ID . ' desc:' . $desc);
         if ($desc) {
-            echo '<span class="hatedetect-status" commentid="' . $comment->comment_ID . '"><a href="comment.php?action=editcomment&amp;c=' . $comment->comment_ID . '#hatedetect-status" title="' . esc_attr($desc_on_hover) . '">' . esc_html($desc) . '</a></span>';
+            echo wp_kses_decode_entities('<span class="hatedetect-status" commentid="' . $comment->comment_ID . '"><a href="comment.php?action=editcomment&amp;c=' . $comment->comment_ID . '#hatedetect-status" title="' . esc_attr($desc_on_hover) . '">' . esc_html($desc) . '</a></span>');
         }
 
         return $a;
