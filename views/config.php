@@ -7,7 +7,6 @@
         </div>
     </div>
     <div class="hatedetect-lower">
-	    <?php Hatedetect_Admin::display_status(); ?>
 		<?php if ( ! empty( $notices ) ) { ?>
 			<?php foreach ( $notices as $notice ) { ?>
 				<?php HateDetect::view( 'notice', $notice ); ?>

@@ -642,7 +642,7 @@ class HateDetect_Admin
             // Show the "Set Up HateDetect" banner on the comments and plugin pages if no API key has been set.
 			HateDetect::view( 'notice', array( 'type' => 'plugin' ) );
 		}
-
+		self::display_status();
         if (isset($_GET['hatedetect_recheck_complete'])) {
             $recheck_count = (int)$_GET['recheck_count'];
             $hate_count = (int)$_GET['hate_count'];
