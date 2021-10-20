@@ -312,8 +312,8 @@ class HateDetect_Admin
 
         $comments_count = wp_count_comments();
 
-        echo '</div>';
-        echo '<div class="alignleft actions">';
+        echo wp_kses_decode_entities('</div>');
+        echo wp_kses_decode_entities('<div class="alignleft actions">');
 
         $classes = array(
             'button-secondary',
@@ -351,7 +351,7 @@ class HateDetect_Admin
 				data-nonce="' . esc_attr(wp_create_nonce('hatedetect_check_for_hate')) . '"
 				' . (!in_array('ajax-disabled', $classes) ? 'onclick="return false;"' : '') . '
 				>' . esc_html__('Check awaiting comments for hate', 'hatedetect') . '</a>');
-        echo '<span class="checkforhate-spinner"></span>';
+        echo wp_kses_decode_entities('<span class="checkforhate-spinner"></span>');
     }
 
     /**
