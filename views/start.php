@@ -13,6 +13,7 @@
         </div>
     </div>
     <div class="hatedetect-lower">
+		<?php Hatedetect_Admin::display_status(); ?>
         <div class="hatedetect-boxes">
 			<?php
 			HateDetect::view( 'enter' );

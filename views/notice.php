@@ -23,8 +23,8 @@
     <div class="notice notice-warning">
         <p><strong><?php esc_html_e( 'HateDetect has detected a problem.', 'hatedetect' ); ?></strong></p>
         <p><?php esc_html_e( 'Some comments have not yet been checked for hate by HateDetect. They have been temporarily held for moderation and will automatically be rechecked later.', 'hatedetect' ); ?></p>
-		<?php if ( $link_text ) { ?>
-            <p><?php echo $link_text; ?></p>
+		<?php if ( !empty($link_text) ) { ?>
+            <p><?php echo esc_url($link_text); ?></p>
 		<?php } ?>
     </div>
 <?php elseif ( $type == 'alert' ) : ?>
@@ -41,21 +41,21 @@
     </div>
 <?php elseif ( $type == 'notice' ) : ?>
     <div class="hatedetect-alert hatedetect-critical">
-        <h3 class="hatedetect-key-status failed"><?php echo $notice_header; ?></h3>
+        <h3 class="hatedetect-key-status failed"><?php echo esc_attr($notice_header); ?></h3>
         <p class="hatedetect-description">
-			<?php echo $notice_text; ?>
+			<?php echo esc_attr($notice_text); ?>
         </p>
     </div>
 <?php elseif ( $type == 'connection-error' ) : ?>
     <div class="hatedetect-alert hatedetect-critical">
-        <h3 class="hatedetect-key-status failed"><?php esc_html_e( "Your site encountered an error when connecting to the HateDetect servers.", 'hatedetect' ); ?></h3>
+        <h3 class="hatedetect-key-status failed"><?php esc_html_e( 'Your site encountered an error when connecting to the HateDetect servers.', 'hatedetect' ); ?></h3>
         <p class="hatedetect-description">
-			<?php echo $notice_text; ?>
+			<?php echo esc_attr($notice_text); ?>
         </p>
     </div>
 <?php elseif ( $type == 'servers-be-down' ) : ?>
     <div class="hatedetect-alert hatedetect-critical">
-        <h3 class="hatedetect-key-status failed"><?php esc_html_e( "Your site can&#8217;t connect to the HateDetect servers.", 'hatedetect' ); ?></h3>
+        <h3 class="hatedetect-key-status failed"><?php esc_html_e( 'Your site can&#8217;t connect to the HateDetect servers.', 'hatedetect' ); ?></h3>
         <p class="hatedetect-description"><?php printf( __( 'Your firewall may be blocking HateDetect from connecting to its API.', 'hatedetect' ), ); ?></p>
     </div>
 <?php elseif ( $type == 'missing' ) : ?>

@@ -173,7 +173,6 @@ class HateDetect_Admin
     public static function admin_help()
     {
         $current_screen = get_current_screen();
-		# TODO verify help contents
 		// Screen Content
 		if ( current_user_can( 'manage_options' ) ) {
 			if ( ! HateDetect_ApiKey::get_api_key() || ( isset( $_GET['view'] ) && filter_var($_GET['view'], FILTER_SANITIZE_STRING) == 'start' ) ) {
@@ -273,7 +272,7 @@ class HateDetect_Admin
 			self::set_form_privacy_notice_option( 'hide' );
 		}
 
-		$new_key = filter_var($_POST['key'], FILTER_SANITIZE_STRING);
+		$new_key = sanitize_text_field($_POST['key']);
 		$old_key = HateDetect_ApiKey::get_api_key();
 
 
@@ -373,7 +372,7 @@ class HateDetect_Admin
             return;
         }
 
-        $result_counts = self::recheck_queue_portion(empty($_POST['offset']) ? 0 : filter_var($_POST['offset'], FILTER_SANITIZE_STRING), empty($_POST['limit']) ? 100 : filter_var($_POST['limit'], FILTER_SANITIZE_STRING));
+        $result_counts = self::recheck_queue_portion(!empty($_POST['offset']) && is_numeric(sanitize_text_field($_POST['offset'])) ?  $_POST['offset'] : 0, !empty($_POST['limit']) && is_numeric(sanitize_text_field($_POST['limit'])? $_POST['limit'] : 100));
 
         if (defined('DOING_AJAX') && DOING_AJAX) {
             wp_send_json(array(
@@ -631,39 +630,46 @@ class HateDetect_Admin
     public static function display_notice()
     {
         global $hook_suffix;
-
+		HateDetect::log( 'admin_notices hook called on hatedetect' );
 		if ( in_array( $hook_suffix, array(
 			'settings_page_hatedetect-key-config'
 		) ) ) {
+			HateDetect::log( 'admin_notices hatedetect settings page' );
 			// This page manages the notices and puts them inline where they make sense.
 			return;
 		}
-		if (('plugins.php' === $hook_suffix || 'edit-comments.php' === $hook_suffix) && !HateDetect_ApiKey::get_api_key()) {
-            // Show the "Set Up HateDetect" banner on the comments and plugin pages if no API key has been set.
-			HateDetect::view( 'notice', array( 'type' => 'plugin' ) );
-		}
-		self::display_status();
-        if (isset($_GET['hatedetect_recheck_complete'])) {
-            $recheck_count = (int)filter_var($_GET['recheck_count'], FILTER_SANITIZE_NUMBER_INT);
-            $hate_count = (int)filter_var($_GET['hate_count'], FILTER_SANITIZE_NUMBER_INT);
+	    if (in_array($hook_suffix, apply_filters('hatedetect_admin_page_hook_suffixes', array(
+		    'index.php', # dashboard
+		    'edit-comments.php',
+		    'plugins.php',
+	    )))) {
+		    if ( ! HateDetect_ApiKey::get_api_key() ) {
+			    // Show the "Set Up HateDetect" banner on the comments and plugin pages if no API key has been set.
+			    HateDetect::view( 'notice', array( 'type' => 'plugin' ) );
+		    }
+		    self::display_status();
+		    if ( isset( $_GET['hatedetect_recheck_complete'] ) ) {
+			    $recheck_count = (int) filter_var( $_GET['recheck_count'], FILTER_SANITIZE_NUMBER_INT );
+			    $hate_count    = (int) filter_var( $_GET['hate_count'], FILTER_SANITIZE_NUMBER_INT );
 
-            if ($recheck_count === 0) {
-                $message = __('There were no comments to check. HateDetect will only check comments awaiting moderation.', 'hatedetect');
-            } else {
-                $message = sprintf(_n('HateDetect checked %s comment.', 'HateDetect checked %s comments.', $recheck_count, 'hatedetect'), number_format($recheck_count));
-                $message .= ' ';
+			    if ( $recheck_count === 0 ) {
+				    $message = __( 'There were no comments to check. HateDetect will only check comments awaiting moderation.', 'hatedetect' );
+			    } else {
+				    $message = sprintf( _n( 'HateDetect checked %s comment.', 'HateDetect checked %s comments.', $recheck_count, 'hatedetect' ), number_format( $recheck_count ) );
+				    $message .= ' ';
 
-                if ($hate_count === 0) {
-                    $message .= __('No comments were caught as hate.', 'hatedetect');
-                } else {
-                    $message .= sprintf(_n('%s comment was caught as hate.', '%s comments were caught as hate.', $hate_count, 'hatedetect'), number_format($hate_count));
-                }
-            }
+				    if ( $hate_count === 0 ) {
+					    $message .= __( 'No comments were caught as hate.', 'hatedetect' );
+				    } else {
+					    $message .= sprintf( _n( '%s comment was caught as hate.', '%s comments were caught as hate.', $hate_count, 'hatedetect' ), number_format( $hate_count ) );
+				    }
+			    }
 
-            echo '<div class="notice notice-success"><p>' . esc_html($message) . '</p></div>';
-        } elseif (isset($_GET['hatedetect_recheck_error'])) {
-            echo '<div class="notice notice-error"><p>' . esc_html(__('HateDetect could not recheck your comments for hate.', 'hatedetect')) . '</p></div>';
-        }
+			    echo '<div class="notice notice-success"><p>' . esc_html( $message ) . '</p></div>';
+		    } elseif ( isset( $_GET['hatedetect_recheck_error'] ) ) {
+			    echo '<div class="notice notice-error"><p>' . esc_html( __( 'HateDetect could not recheck your comments for hate.', 'hatedetect' ) ) . '</p></div>';
+		    }
+	    }
     }
 
     /**

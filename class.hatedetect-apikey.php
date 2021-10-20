@@ -74,7 +74,7 @@ class HateDetect_ApiKey {
 					update_option( 'hatedetect_key_status', 'Activated' );
 				}
 				return true;
-			} elseif ($response[1] == 403 || $response[2] != 'OK' ) {
+			} elseif ($response[1] == 403 || $response[1] == 400 || $response[2] != 'OK' ) {
 				update_option( 'hatedetect_key_status', 'Failed' );
 				update_option( 'hatedetect_key_msg', $key );
 				HateDetect::log( 'Failed to verify key: ' . wp_json_encode( $response ) );
