@@ -34,7 +34,7 @@ class HateDetect_Admin
             self::init_hooks();
         }
 
-        if (isset($_POST['action']) && $_POST['action'] == 'enter-key') {
+        if (isset($_POST['action']) &&  filter_var($_POST['action'], FILTER_SANITIZE_STRING)  == 'enter-key') {
             self::process_settings_update();
         }
     }
@@ -176,7 +176,7 @@ class HateDetect_Admin
 		# TODO verify help contents
 		// Screen Content
 		if ( current_user_can( 'manage_options' ) ) {
-			if ( ! HateDetect_ApiKey::get_api_key() || ( isset( $_GET['view'] ) && $_GET['view'] == 'start' ) ) {
+			if ( ! HateDetect_ApiKey::get_api_key() || ( isset( $_GET['view'] ) && filter_var($_GET['view'], FILTER_SANITIZE_STRING) == 'start' ) ) {
 				//setup page
 				$current_screen->add_help_tab(
 					array(
@@ -257,23 +257,23 @@ class HateDetect_Admin
 				'hatedetect_show_comment_field_message'
 			) as $option
 		) {
-			$new_value = isset( $_POST[ $option ] ) && (int) $_POST[ $option ] == 1 ? '1' : '0';
+			$new_value = isset( $_POST[ $option ] ) && (int)filter_var( $_POST[ $option ], FILTER_SANITIZE_NUMBER_INT)  == 1 ? '1' : '0';
 			if ( update_option( $option, $new_value ) ) {
 				HateDetect::log( 'Updated option: ' . $option . ' New value: ' . $new_value );
 			}
 		}
 		if ( isset( $_POST['hatedetect_lang'] ) ) {
 			if ( array_key_exists( $_POST['hatedetect_lang'], HateDetect_Admin::SUPPORTED_LANGS ) ) {
-				update_option( 'hatedetect_lang', $_POST['hatedetect_lang'] );
+				update_option( 'hatedetect_lang', filter_var( $_POST['hatedetect_lang'], FILTER_SANITIZE_STRING));
 			}
 		}
 		if ( ! empty( $_POST['hatedetect_comment_form_privacy_notice'] ) ) {
-			self::set_form_privacy_notice_option( $_POST['hatedetect_comment_form_privacy_notice'] );
+			self::set_form_privacy_notice_option(  filter_var( $_POST['hatedetect_comment_form_privacy_notice'], FILTER_SANITIZE_STRING));
 		} else {
 			self::set_form_privacy_notice_option( 'hide' );
 		}
 
-		$new_key = $_POST['key'];
+		$new_key = filter_var($_POST['key'], FILTER_SANITIZE_STRING);
 		$old_key = HateDetect_ApiKey::get_api_key();
 
 
@@ -361,7 +361,7 @@ class HateDetect_Admin
     {
         global $wpdb;
 
-        if (!(isset($_GET['recheckqueue']) || (isset($_REQUEST['action']) && 'hatedetect_recheck_queue' == $_REQUEST['action']))) {
+        if (!(isset($_GET['recheckqueue']) || (isset($_REQUEST['action']) && 'hatedetect_recheck_queue' == filter_var($_REQUEST['action'], FILTER_SANITIZE_STRING)))) {
             return;
         }
 
@@ -373,7 +373,7 @@ class HateDetect_Admin
             return;
         }
 
-        $result_counts = self::recheck_queue_portion(empty($_POST['offset']) ? 0 : $_POST['offset'], empty($_POST['limit']) ? 100 : $_POST['limit']);
+        $result_counts = self::recheck_queue_portion(empty($_POST['offset']) ? 0 : filter_var($_POST['offset'], FILTER_SANITIZE_STRING), empty($_POST['limit']) ? 100 : filter_var($_POST['limit'], FILTER_SANITIZE_STRING));
 
         if (defined('DOING_AJAX') && DOING_AJAX) {
             wp_send_json(array(
@@ -599,7 +599,7 @@ class HateDetect_Admin
      */
     public static function display_page()
     {
-        if (!HateDetect_ApiKey::get_api_key() || (isset($_GET['view']) && $_GET['view'] == 'start')) {
+        if (!HateDetect_ApiKey::get_api_key() || (isset($_GET['view']) && filter_var($_GET['view'], FILTER_SANITIZE_STRING) == 'start')) {
             self::display_start_page();
         } else {
             self::display_configuration_page();
@@ -612,7 +612,7 @@ class HateDetect_Admin
     public static function display_start_page()
     {
         if (isset($_GET['action'])) {
-            if ($_GET['action'] == 'delete-key') {
+            if (filter_var($_GET['action'], FILTER_SANITIZE_STRING) == 'delete-key') {
                 if (isset($_GET['_wpnonce']) && wp_verify_nonce($_GET['_wpnonce'], self::NONCE)) {
                     delete_option('hatedetect_api_key');
                     delete_option('hatedetect_key_status');
@@ -644,8 +644,8 @@ class HateDetect_Admin
 		}
 		self::display_status();
         if (isset($_GET['hatedetect_recheck_complete'])) {
-            $recheck_count = (int)$_GET['recheck_count'];
-            $hate_count = (int)$_GET['hate_count'];
+            $recheck_count = (int)filter_var($_GET['recheck_count'], FILTER_SANITIZE_NUMBER_INT);
+            $hate_count = (int)filter_var($_GET['hate_count'], FILTER_SANITIZE_NUMBER_INT);
 
             if ($recheck_count === 0) {
                 $message = __('There were no comments to check. HateDetect will only check comments awaiting moderation.', 'hatedetect');
