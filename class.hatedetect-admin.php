@@ -34,7 +34,7 @@ class HateDetect_Admin
             self::init_hooks();
         }
 
-        if (isset($_POST['action']) &&  filter_var($_POST['action'], FILTER_SANITIZE_STRING)  == 'enter-key') {
+        if (isset($_POST['action']) &&  sanitize_text_field($_POST['action'])  == 'enter-key') {
             self::process_settings_update();
         }
     }
@@ -175,7 +175,7 @@ class HateDetect_Admin
         $current_screen = get_current_screen();
 		// Screen Content
 		if ( current_user_can( 'manage_options' ) ) {
-			if ( ! HateDetect_ApiKey::get_api_key() || ( isset( $_GET['view'] ) && filter_var($_GET['view'], FILTER_SANITIZE_STRING) == 'start' ) ) {
+			if ( ! HateDetect_ApiKey::get_api_key() || ( isset( $_GET['view'] ) && sanitize_text_field($_GET['view']) == 'start' ) ) {
 				//setup page
 				$current_screen->add_help_tab(
 					array(
@@ -256,18 +256,19 @@ class HateDetect_Admin
 				'hatedetect_show_comment_field_message'
 			) as $option
 		) {
-			$new_value = isset( $_POST[ $option ] ) && (int)filter_var( $_POST[ $option ], FILTER_SANITIZE_NUMBER_INT)  == 1 ? '1' : '0';
+			$new_value = isset( $_POST[ $option ] ) && intval( $_POST[ $option ])  == 1 ? '1' : '0';
 			if ( update_option( $option, $new_value ) ) {
 				HateDetect::log( 'Updated option: ' . $option . ' New value: ' . $new_value );
 			}
 		}
 		if ( isset( $_POST['hatedetect_lang'] ) ) {
-			if ( array_key_exists( $_POST['hatedetect_lang'], HateDetect_Admin::SUPPORTED_LANGS ) ) {
-				update_option( 'hatedetect_lang', filter_var( $_POST['hatedetect_lang'], FILTER_SANITIZE_STRING));
+			$sanitized_lang = sanitize_text_field($_POST['hatedetect_lang']);
+			if ( array_key_exists( $sanitized_lang, HateDetect_Admin::SUPPORTED_LANGS ) ) {
+				update_option( 'hatedetect_lang', $sanitized_lang);
 			}
 		}
 		if ( ! empty( $_POST['hatedetect_comment_form_privacy_notice'] ) ) {
-			self::set_form_privacy_notice_option(  filter_var( $_POST['hatedetect_comment_form_privacy_notice'], FILTER_SANITIZE_STRING));
+			self::set_form_privacy_notice_option(  sanitize_text_field( $_POST['hatedetect_comment_form_privacy_notice']));
 		} else {
 			self::set_form_privacy_notice_option( 'hide' );
 		}
@@ -360,7 +361,7 @@ class HateDetect_Admin
     {
         global $wpdb;
 
-        if (!(isset($_GET['recheckqueue']) || (isset($_REQUEST['action']) && 'hatedetect_recheck_queue' == filter_var($_REQUEST['action'], FILTER_SANITIZE_STRING)))) {
+        if (!(isset($_GET['recheckqueue']) || (isset($_REQUEST['action']) && 'hatedetect_recheck_queue' == sanitize_text_field($_REQUEST['action'])))) {
             return;
         }
 
@@ -598,7 +599,7 @@ class HateDetect_Admin
      */
     public static function display_page()
     {
-        if (!HateDetect_ApiKey::get_api_key() || (isset($_GET['view']) && filter_var($_GET['view'], FILTER_SANITIZE_STRING) == 'start')) {
+        if (!HateDetect_ApiKey::get_api_key() || (isset($_GET['view']) && sanitize_text_field($_GET['view']) == 'start')) {
             self::display_start_page();
         } else {
             self::display_configuration_page();
@@ -611,7 +612,7 @@ class HateDetect_Admin
     public static function display_start_page()
     {
         if (isset($_GET['action'])) {
-            if (filter_var($_GET['action'], FILTER_SANITIZE_STRING) == 'delete-key') {
+            if (sanitize_text_field($_GET['action']) == 'delete-key') {
                 if (isset($_GET['_wpnonce']) && wp_verify_nonce($_GET['_wpnonce'], self::NONCE)) {
                     delete_option('hatedetect_api_key');
                     delete_option('hatedetect_key_status');
@@ -753,7 +754,7 @@ class HateDetect_Admin
     {
         $refer = wp_get_referer();
         if (wp_verify_nonce($_REQUEST['_wpnonce'], 'check_for_hate')) {
-            $id = $_REQUEST['c'];
+            $id = sanitize_key($_REQUEST['c']);
             HateDetect::check_comment($id, get_comment($id));
         }
         wp_redirect($refer);
@@ -768,7 +769,7 @@ class HateDetect_Admin
     {
         $refer = wp_get_referer();
         if (wp_verify_nonce($_REQUEST['_wpnonce'], 'explain_hate')) {
-            $id = $_REQUEST['c'];
+            $id = sanitize_key($_REQUEST['c']);
             HateDetect::check_why_hate($id, get_comment($id));
         }
         wp_redirect($refer);
