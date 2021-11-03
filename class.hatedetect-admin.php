@@ -650,8 +650,14 @@ class HateDetect_Admin
 		    }
 		    self::display_status();
 		    if ( isset( $_GET['hatedetect_recheck_complete'] ) ) {
-			    $recheck_count = (int) filter_var( $_GET['recheck_count'], FILTER_SANITIZE_NUMBER_INT );
-			    $hate_count    = (int) filter_var( $_GET['hate_count'], FILTER_SANITIZE_NUMBER_INT );
+				$recheck_count = sanitize_key($_GET['recheck_count']);
+				$hate_count = sanitize_key($_GET['hate_count']);
+
+				if ( !is_numeric($recheck_count) || !is_numeric($hate_count)) {
+					return;
+				}
+			    $recheck_count = (int) $recheck_count;
+			    $hate_count    = (int) $hate_count;
 
 			    if ( $recheck_count === 0 ) {
 				    $message = __( 'There were no comments to check. HateDetect will only check comments awaiting moderation.', 'hatedetect' );
