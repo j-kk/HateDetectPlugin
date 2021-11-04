@@ -4,7 +4,7 @@ Tags: hatedetect, hatecheck, comments, hate detection, hate, hate-detection, ant
 Requires at least: 4.7
 Tested up to: 5.8
 Stable tag: 0.1
-License: GPLv2 or later
+License: GPLv2
 
 HateDetect checks your comments using the codeagainsthate service to see if they contain hate speech or not.
 
