@@ -3,7 +3,7 @@ Contributors: qqkk
 Tags: hatedetect, hatecheck, comments, hate detection, hate, hate-detection, antihate, anti hate, anti-hate
 Requires at least: 4.7
 Tested up to: 5.8
-Stable tag: 0.1
+Stable tag: 0.1.1
 License: GPLv2
 
 HateDetect checks your comments using the codeagainsthate service to see if they contain hate speech or not.
@@ -30,6 +30,9 @@ It's required to use the plugin.
 Each site has a reasonable api usage limitations. We will contact you if your site produces too much load on our side.
 
 == Changelog ==
+
+= 0.1.1 =
+* Added missing css and script files
 
 = 0.1 =
 * Basic version of the plugin
