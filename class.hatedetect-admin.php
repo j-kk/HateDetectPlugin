@@ -581,9 +581,10 @@ class HateDetect_Admin
      */
     public static function display_api_key_warning()
     {
-		$key_status = get_option('hatedetect_key_status');
+		$key_status = get_option('hatedetect_key_status', 'key_empty');
         if ($key_status == 'Failed') {
             HateDetect::view('notice', array('type' => 'new-key-invalid'));
+			delete_option('hatedetect_key_status');
         } elseif ($key_status === 'Activated') {
             HateDetect::view('notice', array('type' => 'activated'));
             update_option('hatedetect_key_status', 'OK');

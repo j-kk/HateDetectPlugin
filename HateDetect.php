@@ -8,7 +8,7 @@
 Plugin Name: HateDetect
 Plugin URI: codeagainsthate.eu
 Description: HateDetect checks your comments using the code against hate service to see if they contain hate speech or not
-Version: 0.1
+Version: 0.1.2
 Author: qqkk
 License: GPLv2
 */
