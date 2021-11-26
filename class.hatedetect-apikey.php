@@ -5,21 +5,25 @@ class HateDetect_ApiKey {
 	/**
      * Retrieves hatedetect api key. False if not found
 	 *
-     * @return false|string
+     * @return null|string
 	 */
 	public static function get_api_key() {
-		return get_option( 'hatedetect_api_key' );
+		return get_option( 'hatedetect_api_key' , null);
 	}
 
 	/**
 	 * Checking api key status.
 	 * Api key is necessary to connect with hate detection model.
 	 *
-	 * @param string $api_key api key
+	 * @param string|null $api_key api key
 	 *
 	 * @return bool|null true if key is valid, else false, when unable to connect returns null.
 	 */
-	public static function check_key_status( string $api_key ) {
+	public static function check_key_status( $api_key ) {
+		if (is_null($api_key)) {
+			update_option( 'hatedetect_key_status', 'new-key-empty' );
+			return false;
+		}
 		HateDetect::log( 'Checking key status: ' . $api_key );
 		$response = HateDetect::http_post( [], 'isalive', null, false, $api_key );
 
@@ -44,10 +48,8 @@ class HateDetect_ApiKey {
 	 */
 	public static function get_key_status(): string
 	{
-		if (get_option('hatedetect_key_status') === false) {
-			self::check_key_status(HateDetect_ApiKey::get_api_key());
-		} elseif (get_option('hatedetect_key_status') != 'OK') {
-			self::check_key_status(HateDetect_ApiKey::get_api_key());
+		if (get_option('hatedetect_key_status') === false || get_option('hatedetect_key_status') != 'OK') {
+			self::check_key_status( HateDetect_ApiKey::get_api_key() );
 		}
 
 		return get_option('hatedetect_key_status') ? get_option('hatedetect_key_status') : 'Unknown';
